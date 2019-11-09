@@ -44,6 +44,13 @@ class RootWidget(BoxLayout):
             print(f.read())
         self.dismiss_popup()
 
+    def reset(self):
+        self.reset()
+
+    def quit(self):
+        sys.setrecursionlimit(100000)
+        self.quit()
+
 
 class CustomBtn(Widget):
 
@@ -66,7 +73,7 @@ class CustomBtn(Widget):
 
     def on_pressed(self, instance, pos):
         print("pressed at {pos}".format(pos=pos))
-
+            
 
 class ReadFile:
     def __init__(self):
