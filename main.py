@@ -44,8 +44,8 @@ class RootWidget(BoxLayout):
             print(f.read())
         self.dismiss_popup()
 
-    def reset(self):
-        self.reset()
+    def reset_canvas(self):
+        self.canvas.clear()
 
     def quit(self):
         sys.setrecursionlimit(100000)

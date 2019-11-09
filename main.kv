@@ -10,18 +10,18 @@
                 with_previous: False
             ActionOverflow:
             ActionButton:
-                important: True
                 text: 'LOAD'
                 on_release: root.show_load()
             ActionButton:
                 text: 'RESET'
-                on_press: root.reset()
+                on_release: root.reset_canvas()
             ActionButton:
                 text: 'RUN'
             ActionButton:
                 text: 'OUTPUT'
             ActionButton:
                 text: 'QUIT'
+                on_release: root.quit()
     CustomBtn:
 
 <LoadDialog>:
