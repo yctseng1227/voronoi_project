@@ -3,23 +3,20 @@ from kivy.uix.widget import Widget
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import ListProperty
-
 from kivy.graphics import Color, Ellipse
-
 import sys
 
-from kivy.lang import Builder
 
-
-class draw_voronoi():
+class draw_voronoi:
     pass
 
+
 class RootWidget(BoxLayout):
-    def __init__(self, **kwargs):
-        super(RootWidget, self).__init__(**kwargs)
-        cb = CustomBtn()
-        # cb.bind(pressed=self.btn_pressed)
-        self.add_widget(cb)
+    # def __init__(self, **kwargs):
+    #     super(RootWidget, self).__init__(**kwargs)
+    #     cb = CustomBtn()
+    #     # cb.bind(pressed=self.btn_pressed)
+    #     self.add_widget(cb)
 
     def btn_pressed(self, instance, pos):
         print("pos: printed from root widget: {pos}".format(pos=pos))
@@ -77,29 +74,4 @@ class MainApp(App):
 
 
 if __name__ == "__main__":
-    from kivy.base import runTouchApp
-    from kivy.lang import Builder
-
-    runTouchApp(Builder.load_string('''
-ActionBar:
-    background_color:0,191,255,0.5
-    pos_hint: {'top':1}
-    ActionView:
-        use_separator: True
-        ActionPrevious:
-            title: 'M083140005'
-            with_previous: False
-        ActionOverflow:
-        ActionButton:
-            important: True
-            text: 'LOAD'
-        ActionButton:
-            text: 'RESET'
-        ActionButton:
-            text: 'RUN'
-        ActionButton:
-            text: 'OUTPUT'
-        ActionButton:
-            text: 'QUIT'
-'''))
     MainApp().run()
