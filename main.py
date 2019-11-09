@@ -10,6 +10,9 @@ from kivy.uix.popup import Popup
 from kivy.core.window import Window
 import sys
 import os
+import cv2
+import numpy as np
+
 
 Window.size = (800, 647)
 
@@ -29,8 +32,8 @@ class RootWidget(BoxLayout):
     #     # cb.bind(pressed=self.btn_pressed)
     #     self.add_widget(cb)
 
-    def btn_pressed(self, instance, pos):
-        print("pos: printed from root widget: {pos}".format(pos=pos))
+    # def btn_pressed(self, instance, pos):
+    #    print("pos: printed from root widget: {pos}".format(pos=pos))
 
     def dismiss_popup(self):
         self._popup.dismiss()
@@ -42,18 +45,31 @@ class RootWidget(BoxLayout):
 
     def load(self, path, filename):
         with open(os.path.join(path, filename[0])) as f:
-            print(os.path.join(path, filename[0]))
-            print(f.read())
+            print("load: ", os.path.join(path, filename[0]))
+            # print(f.read())
+            
+            line = f.readline()
+            while line:
+                if len(line) > 0 and line[0] != "#":
+                    if len(line.split()) == 1:
+                        n = int(line.split()[0])
+                        if n == 0:
+                            exit()
+                        points = []
+                        for _ in range(n):
+                            tmp = f.readline()
+                            points.append(tuple(map(int, tmp.split())))
+                        print(points)
+
+                line = f.readline()
+
         self.dismiss_popup()
 
     def clean_canvas(self):
+        # self.canvas.clear() # also clear bar
         with self.canvas:
             Color(rgba=[1,1,1,1])
             Rectangle(pos=self.pos, size=(800,600))
-
-    def quit(self):
-        sys.setrecursionlimit(100000)
-        self.quit()
 
 
 class CustomBtn(Widget):

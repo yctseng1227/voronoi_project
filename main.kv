@@ -28,7 +28,7 @@
                 text: 'OUTPUT'
             ActionButton:
                 text: 'QUIT'
-                on_release: root.quit()
+                on_release: app.stop()
     CustomBtn:
 
 <LoadDialog>:
@@ -38,6 +38,7 @@
         orientation: "vertical"
         FileChooserListView:
             id: filechooser
+            path: "./"
 
         BoxLayout:
             size_hint_y: None
