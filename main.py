@@ -2,13 +2,22 @@ from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.floatlayout import FloatLayout
 from kivy.properties import ListProperty
 from kivy.graphics import Color, Ellipse
+from kivy.properties import ObjectProperty
+from kivy.uix.popup import Popup
 import sys
+import os
 
 
 class draw_voronoi:
     pass
+
+
+class LoadDialog(FloatLayout):
+    load = ObjectProperty(None)
+    cancel = ObjectProperty(None)
 
 
 class RootWidget(BoxLayout):
@@ -20,6 +29,20 @@ class RootWidget(BoxLayout):
 
     def btn_pressed(self, instance, pos):
         print("pos: printed from root widget: {pos}".format(pos=pos))
+
+    def dismiss_popup(self):
+        self._popup.dismiss()
+
+    def show_load(self):
+        content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
+        self._popup = Popup(title="Load file", content=content, size_hint=(0.9, 0.9))
+        self._popup.open()
+
+    def load(self, path, filename):
+        with open(os.path.join(path, filename[0])) as f:
+            print(os.path.join(path, filename[0]))
+            print(f.read())
+        self.dismiss_popup()
 
 
 class CustomBtn(Widget):

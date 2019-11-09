@@ -12,6 +12,7 @@
             ActionButton:
                 important: True
                 text: 'LOAD'
+                on_release: root.show_load()
             ActionButton:
                 text: 'RESET'
             ActionButton:
@@ -21,3 +22,22 @@
             ActionButton:
                 text: 'QUIT'
     CustomBtn:
+
+<LoadDialog>:
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+
+            Button:
+                text: "Load"
+                on_release: root.load(filechooser.path, filechooser.selection)
