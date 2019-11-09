@@ -1,15 +1,17 @@
+# Algorithm project by m083140005
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
-from kivy.properties import ListProperty
-from kivy.graphics import Color, Ellipse
-from kivy.properties import ObjectProperty
+from kivy.properties import ListProperty, ObjectProperty
+from kivy.graphics import Color, Ellipse, Rectangle
 from kivy.uix.popup import Popup
+from kivy.core.window import Window
 import sys
 import os
 
+Window.size = (800, 647)
 
 class draw_voronoi:
     pass
@@ -44,8 +46,10 @@ class RootWidget(BoxLayout):
             print(f.read())
         self.dismiss_popup()
 
-    def reset_canvas(self):
-        self.canvas.clear()
+    def clean_canvas(self):
+        with self.canvas:
+            Color(rgba=[1,1,1,1])
+            Rectangle(pos=self.pos, size=(800,600))
 
     def quit(self):
         sys.setrecursionlimit(100000)
@@ -73,7 +77,7 @@ class CustomBtn(Widget):
 
     def on_pressed(self, instance, pos):
         print("pressed at {pos}".format(pos=pos))
-            
+
 
 class ReadFile:
     def __init__(self):
