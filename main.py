@@ -20,11 +20,11 @@ import numpy as np
 
 Window.size = (800,647)
 #Config.set("graphics", "width", "800")
-#Config.set("graphics", "height", "640")
+#Config.set("graphics", "height", "647")
 
 points = []
 
-class Voronoi(BoxLayout):
+class Voronoi(Image):
     def __init__(self, img):
         self.img = img
 
@@ -68,25 +68,24 @@ class FullImage(Image):
         position = int(pos.x), 600 - int(pos.y)
         cv2.circle(self.image, position, 1, (0, 0, 255), 2)
         cv2.imwrite(self.Image, self.image)
-        points.append(position)
-        print("draw:", position)
+
+        # lock bar : (x, -y)
+        if position[0] > 0 and position[1] > 0:
+            points.append(position)
+            print("draw:", position)
         self.reload()
+
 
 class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
     cancel = ObjectProperty(None)
 
+class SaveDialog(FloatLayout):
+    save = ObjectProperty(None)
+    text_input = ObjectProperty(None)
+    cancel = ObjectProperty(None)
 
 class RootWidget(BoxLayout):
-    # def __init__(self, **kwargs):
-    #     super(RootWidget, self).__init__(**kwargs)
-    #     cb = CustomBtn()
-    #     # cb.bind(pressed=self.btn_pressed)
-    #     self.add_widget(cb)
-
-    # def btn_pressed(self, instance, pos):
-    #    print("pos: printed from root widget: {pos}".format(pos=pos))
-
     def dismiss_popup(self):
         self._popup.dismiss()
 
@@ -96,11 +95,11 @@ class RootWidget(BoxLayout):
         self._popup.open()
 
     def load(self, path, filename):
-        with open(os.path.join(path, filename[0])) as f:
+        with open(os.path.join(path, filename[0])) as stream:
             print("load: ", os.path.join(path, filename[0]))
-            # print(f.read())
+            # print(stream.read())
             
-            line = f.readline()
+            line = stream.readline()
             while line:
                 if len(line) > 0 and line[0] != "#":
                     if len(line.split()) == 1:
@@ -109,10 +108,22 @@ class RootWidget(BoxLayout):
                             exit()
                         points = []
                         for _ in range(n):
-                            tmp = f.readline()
+                            tmp = stream.readline()
                             points.append(tuple(map(int, tmp.split())))
                         print(points)
-                line = f.readline()
+                line = stream.readline()
+
+        self.dismiss_popup()
+
+    def show_save(self):
+        content = SaveDialog(save=self.save, cancel=self.dismiss_popup)
+        self._popup = Popup(title="Save file", content=content,
+                            size_hint=(0.9, 0.9))
+        self._popup.open()
+
+    def save(self, path, filename):
+        with open(os.path.join(path, filename), 'w') as stream:
+            stream.write(str(points))
 
         self.dismiss_popup()
 
@@ -131,8 +142,8 @@ class RootWidget(BoxLayout):
         subdiv = cv2.Subdiv2D(rect = (0, 0, img.image.shape[1], img.image.shape[0]))
         v = Voronoi(img.image)
 
-        for p in points[:-1]:
-            subdiv.insert(p)            
+        for p in points:
+            subdiv.insert(p)
             v.draw_voronoi(subdiv)
 
             # Display as an animation
@@ -142,56 +153,32 @@ class RootWidget(BoxLayout):
         sys.exit() # TODO
 
 
-class CustomBtn(Widget):
+# class CustomBtn(Widget):
 
-    pressed = ListProperty([0, 0])
+#     pressed = ListProperty([0, 0])
 
-    def on_touch_down(self, touch):
-        if self.collide_point(*touch.pos):
+#     def on_touch_down(self, touch):
+#         if self.collide_point(*touch.pos):
 
-            # draw point
-            with self.canvas:
-                Color(1, 0, 0)
-                d = 5.0
-                Ellipse(pos=(touch.x - d / 2, touch.y - d / 2), size=(d, d))
-            self.pressed = touch.pos
+#             # draw point
+#             with self.canvas:
+#                 Color(1, 0, 0)
+#                 d = 5.0
+#                 Ellipse(pos=(touch.x - d / 2, touch.y - d / 2), size=(d, d))
+#             self.pressed = touch.pos
 
-            # we consumed the touch. return False here to propagate
-            # the touch further to the children.
-            return True
-        return super(CustomBtn, self).on_touch_down(touch)
+#             # we consumed the touch. return False here to propagate
+#             # the touch further to the children.
+#             return True
+#         return super(CustomBtn, self).on_touch_down(touch)
 
-    def on_pressed(self, instance, pos):
-        print("pressed at {pos}".format(pos=pos))
-
-
-class ReadFile:
-    def __init__(self):
-        file = open(sys.argv[1], "r", encoding="UTF-8")
-        line = file.readline()
-
-        while line:
-            if len(line) > 0 and line[0] != "#":
-                if len(line.split()) == 1:
-                    n = int(line.split()[0])
-                    if n == 0:
-                        exit()
-                    points = []
-                    for _ in range(n):
-                        tmp = file.readline()
-                        points.append(tuple(map(int, tmp.split())))
-                    print(points)
-            line = file.readline()
-        file.close()
+#     def on_pressed(self, instance, pos):
+#         print("pressed at {pos}".format(pos=pos))
 
 
 class MainApp(App):
     def build(self):
-        if len(sys.argv) > 1:
-            return ReadFile()
-        else:
-            return RootWidget()
-
+        return RootWidget()
 
 if __name__ == "__main__":
     MainApp().run()
