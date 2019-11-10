@@ -8,17 +8,69 @@ from kivy.properties import ListProperty, ObjectProperty
 from kivy.graphics import Color, Ellipse, Rectangle
 from kivy.uix.popup import Popup
 from kivy.core.window import Window
+from kivy.config import Config
+from kivy.uix.image import Image
+
 import sys
 import os
 import cv2
+import random
 import numpy as np
 
 
-Window.size = (800, 647)
+Window.size = (800,647)
+#Config.set("graphics", "width", "800")
+#Config.set("graphics", "height", "640")
 
-class draw_voronoi:
-    pass
+points = []
 
+class Voronoi(BoxLayout):
+    def __init__(self, img):
+        self.img = img
+
+    def draw_voronoi(self, subdiv):
+        # Get facets and centers
+        (facets, centers) = subdiv.getVoronoiFacetList([])
+
+        for i in range(0, len(facets)):
+            ifacetArr = []
+            for f in facets[i]:
+                ifacetArr.append(f)
+
+            # Extract ith facet
+            ifacet = np.array(ifacetArr, np.int)
+
+            # Generate random color
+            color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+
+            # Fill facet with a random color
+            cv2.fillConvexPoly(self.img, ifacet, color, cv2.LINE_AA, 0)
+
+            # Draw facet boundary
+            ifacets = np.array([ifacet])
+            cv2.polylines(self.img, ifacets, True, (0, 0, 0), 1, cv2.LINE_AA, 0)
+
+            # Draw centers.
+            cv2.circle(self.img, (centers[i][0], centers[i][1]), 3, (0, 0, 0), -1, cv2.LINE_AA, 0)
+ 
+
+class FullImage(Image):
+    def __init__(self, **kwargs):
+        super(FullImage, self).__init__(**kwargs)
+
+        width, height = 800, 600
+        self.image = 255 * np.ones(shape=[height, width, 3], dtype=np.uint8)
+        self.Image = "image.png"
+        cv2.imwrite(self.Image, self.image)
+        self.source = self.Image
+
+    def on_touch_down(self, pos):
+        position = int(pos.x), 600 - int(pos.y)
+        cv2.circle(self.image, position, 1, (0, 0, 255), 2)
+        cv2.imwrite(self.Image, self.image)
+        points.append(position)
+        print("draw:", position)
+        self.reload()
 
 class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
@@ -60,7 +112,6 @@ class RootWidget(BoxLayout):
                             tmp = f.readline()
                             points.append(tuple(map(int, tmp.split())))
                         print(points)
-
                 line = f.readline()
 
         self.dismiss_popup()
@@ -70,6 +121,25 @@ class RootWidget(BoxLayout):
         with self.canvas:
             Color(rgba=[1,1,1,1])
             Rectangle(pos=self.pos, size=(800,600))
+        points.clear()
+    
+    def draw_voronoi(self):
+        print(points)
+
+        img = FullImage()
+        #imgVoronoi = np.zeros(img.image.shape, dtype=img.image.dtype)
+        subdiv = cv2.Subdiv2D(rect = (0, 0, img.image.shape[1], img.image.shape[0]))
+        v = Voronoi(img.image)
+
+        for p in points[:-1]:
+            subdiv.insert(p)            
+            v.draw_voronoi(subdiv)
+
+            # Display as an animation
+            imgDisplay = np.hstack([img.image])
+            cv2.imshow("Voro", imgDisplay)
+            cv2.waitKey(500)
+        sys.exit() # TODO
 
 
 class CustomBtn(Widget):

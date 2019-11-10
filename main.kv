@@ -24,12 +24,14 @@
                 on_release: root.clean_canvas()
             ActionButton:
                 text: 'RUN'
+                on_release: root.draw_voronoi()
             ActionButton:
                 text: 'OUTPUT'
             ActionButton:
                 text: 'QUIT'
                 on_release: app.stop()
-    CustomBtn:
+    #CustomBtn:
+    FullImage:
 
 <LoadDialog>:
     BoxLayout:
