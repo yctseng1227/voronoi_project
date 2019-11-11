@@ -16,13 +16,54 @@ import os
 import cv2
 import random
 import numpy as np
-
+import parser
 
 Window.size = (800,647)
 #Config.set("graphics", "width", "800")
 #Config.set("graphics", "height", "647")
 
 points = []
+
+
+class Drawer:
+    def __init__(self, height=600, width=600):
+        self.Image = "image.png"
+        self.height = height
+        self.width = width
+        self.fill_white()
+        self.save()
+
+    def save(self):
+        cv2.imwrite(self.Image, self.image)
+
+    def point(self, point):
+        cv2.circle(self.image, point, 5, (255, 0, 0), 2)
+        return self
+
+    def fill_white(self):
+        self.image = 255 * np.ones(shape=[self.height, self.width, 3], dtype=np.uint8)
+        return self
+
+    def set_points(self, points):
+        self.points = iter(points)
+
+    def next_points(self):
+        self.fill_white()
+        subset_points = next(self.points, None)
+        print(subset_points)
+
+        if subset_points is None:
+            return self
+
+        for point in subset_points:
+            self.point(point)
+        return self
+
+    def voronoi_diagram(self):
+        print("# TODO")
+        return self
+
+drawer = Drawer()
 
 class Voronoi(Image):
     def __init__(self, img):
@@ -86,6 +127,9 @@ class SaveDialog(FloatLayout):
     cancel = ObjectProperty(None)
 
 class RootWidget(BoxLayout):
+
+
+
     def dismiss_popup(self):
         self._popup.dismiss()
 
@@ -95,6 +139,16 @@ class RootWidget(BoxLayout):
         self._popup.open()
 
     def load(self, path, filename):
+        filename = os.path.join(path, filename[0])
+        with open(filename, encoding="big5") as f:
+            lines = f.readlines()
+
+        points = parser.points(lines)
+        drawer.set_points(points)
+        drawer.next_points().save()
+        self.reload_mycanvas()
+        self.dismiss_popup()
+        '''
         with open(os.path.join(path, filename[0])) as stream:
             print("load: ", os.path.join(path, filename[0]))
             # print(stream.read())
@@ -111,14 +165,20 @@ class RootWidget(BoxLayout):
                             tmp = stream.readline()
                             points.append(tuple(map(int, tmp.split())))
                         print(points)
+                        drawer.set_points(points)
+                        drawer.next_points().save()
+                        self.reload_mycanvas()
+                        self.dismiss_popup()
                 line = stream.readline()
 
         self.dismiss_popup()
+        '''
+    def reload_mycanvas(self):
+        self.ids.my_canvas.reload()
 
     def show_save(self):
         content = SaveDialog(save=self.save, cancel=self.dismiss_popup)
-        self._popup = Popup(title="Save file", content=content,
-                            size_hint=(0.9, 0.9))
+        self._popup = Popup(title="Save file", content=content, size_hint=(0.9, 0.9))
         self._popup.open()
 
     def save(self, path, filename):
@@ -128,10 +188,14 @@ class RootWidget(BoxLayout):
         self.dismiss_popup()
 
     def clean_canvas(self):
+        drawer.fill_white().save()
+        self.reload_mycanvas()
+        '''
         # self.canvas.clear() # also clear bar
         with self.canvas:
             Color(rgba=[1,1,1,1])
             Rectangle(pos=self.pos, size=(800,600))
+        '''
         points.clear()
     
     def draw_voronoi(self):
@@ -148,9 +212,9 @@ class RootWidget(BoxLayout):
 
             # Display as an animation
             imgDisplay = np.hstack([img.image])
-            cv2.imshow("Voro", imgDisplay)
-            cv2.waitKey(500)
-        sys.exit() # TODO
+            # cv2.imshow("Voro", imgDisplay)
+            # cv2.waitKey(500)
+        #sys.exit() # TODO
 
 
 # class CustomBtn(Widget):
