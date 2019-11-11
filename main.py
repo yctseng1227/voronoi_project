@@ -16,60 +16,69 @@ import os
 import cv2
 import random
 import numpy as np
-import parser
+# import parser
 
-Window.size = (800,647)
+Window.size = (800, 647)
 #Config.set("graphics", "width", "800")
 #Config.set("graphics", "height", "647")
 
-points = []
+gPoints = []
 
+class NoNextPointsError(RuntimeError):
+    pass
 
-class Drawer:
-    def __init__(self, height=600, width=600):
+class Painter(Image):
+    def __init__(self, **kwargs):
+        super(Painter, self).__init__(**kwargs)
+        self.h = 600
+        self.w = 800
         self.Image = "image.png"
-        self.height = height
-        self.width = width
-        self.fill_white()
-        self.save()
-
+        self.fill_white().save()
+        self.source = self.Image
+        self.subset_points = iter([])
+        
     def save(self):
         cv2.imwrite(self.Image, self.image)
 
-    def point(self, point):
-        cv2.circle(self.image, point, 5, (255, 0, 0), 2)
+    def draw_point(self, point):
+        cv2.circle(self.image, point, 1, (0, 0, 255), 2)
+        return self
+
+    def points(self, points):
+        for point in points:
+            self.draw_point(point)
         return self
 
     def fill_white(self):
-        self.image = 255 * np.ones(shape=[self.height, self.width, 3], dtype=np.uint8)
+        self.image = 255 * np.ones(shape=[self.h, self.w, 3], dtype=np.uint8)
         return self
 
-    def set_points(self, points):
-        self.points = iter(points)
+    def on_touch_down(self, pos):
+        if self.collide_point(*pos.pos):
+            position = int(pos.x), 600 - int(pos.y)
+            print(position)
+            gPoints.append(position)
+            self.draw_point(position).save()
+            self.reload()
+
+    def set_subset_points(self, points):
+        self.subset_points = iter(points)
 
     def next_points(self):
         self.fill_white()
-        subset_points = next(self.points, None)
+        subset_points = next(self.subset_points, None)
         print(subset_points)
 
         if subset_points is None:
-            return self
+            raise NoNextPointsError("error...")
 
-        for point in subset_points:
-            self.point(point)
+        self.points(subset_points)
+        global gPoints 
+        gPoints = subset_points
+
         return self
-
-    def voronoi_diagram(self):
-        print("# TODO")
-        return self
-
-drawer = Drawer()
-
-class Voronoi(Image):
-    def __init__(self, img):
-        self.img = img
-
-    def draw_voronoi(self, subdiv):
+    
+    def voronoi_sample(self, subdiv):
         # Get facets and centers
         (facets, centers) = subdiv.getVoronoiFacetList([])
 
@@ -85,38 +94,15 @@ class Voronoi(Image):
             color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
             # Fill facet with a random color
-            cv2.fillConvexPoly(self.img, ifacet, color, cv2.LINE_AA, 0)
+            cv2.fillConvexPoly(self.image, ifacet, color, cv2.LINE_AA, 0)
 
             # Draw facet boundary
             ifacets = np.array([ifacet])
-            cv2.polylines(self.img, ifacets, True, (0, 0, 0), 1, cv2.LINE_AA, 0)
+            cv2.polylines(self.image, ifacets, True, (0, 0, 0), 1, cv2.LINE_AA, 0)
 
             # Draw centers.
-            cv2.circle(self.img, (centers[i][0], centers[i][1]), 3, (0, 0, 0), -1, cv2.LINE_AA, 0)
- 
-
-class FullImage(Image):
-    def __init__(self, **kwargs):
-        super(FullImage, self).__init__(**kwargs)
-
-        width, height = 800, 600
-        self.image = 255 * np.ones(shape=[height, width, 3], dtype=np.uint8)
-        self.Image = "image.png"
-        cv2.imwrite(self.Image, self.image)
-        self.source = self.Image
-
-    def on_touch_down(self, pos):
-        position = int(pos.x), 600 - int(pos.y)
-        cv2.circle(self.image, position, 1, (0, 0, 255), 2)
-        cv2.imwrite(self.Image, self.image)
-
-        # lock bar : (x, -y)
-        if position[0] > 0 and position[1] > 0:
-            points.append(position)
-            print("draw:", position)
-        self.reload()
-
-
+            cv2.circle(self.image, (centers[i][0], centers[i][1]), 3, (0, 0, 0), -1, cv2.LINE_AA, 0)
+    
 class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
     cancel = ObjectProperty(None)
@@ -127,8 +113,8 @@ class SaveDialog(FloatLayout):
     cancel = ObjectProperty(None)
 
 class RootWidget(BoxLayout):
-
-
+    def reload_mycanvas(self):
+        self.ids.my_canvas.reload()
 
     def dismiss_popup(self):
         self._popup.dismiss()
@@ -139,42 +125,41 @@ class RootWidget(BoxLayout):
         self._popup.open()
 
     def load(self, path, filename):
-        filename = os.path.join(path, filename[0])
-        with open(filename, encoding="big5") as f:
-            lines = f.readlines()
-
-        points = parser.points(lines)
-        drawer.set_points(points)
-        drawer.next_points().save()
-        self.reload_mycanvas()
-        self.dismiss_popup()
-        '''
         with open(os.path.join(path, filename[0])) as stream:
             print("load: ", os.path.join(path, filename[0]))
             # print(stream.read())
-            
+
+            all_points = []
             line = stream.readline()
             while line:
-                if len(line) > 0 and line[0] != "#":
-                    if len(line.split()) == 1:
-                        n = int(line.split()[0])
-                        if n == 0:
-                            exit()
-                        points = []
-                        for _ in range(n):
-                            tmp = stream.readline()
-                            points.append(tuple(map(int, tmp.split())))
-                        print(points)
-                        drawer.set_points(points)
-                        drawer.next_points().save()
-                        self.reload_mycanvas()
-                        self.dismiss_popup()
-                line = stream.readline()
+                if len(line) > 0 and line[0] != "#" and len(line.split()) == 1:
+                    n = int(line.split()[0])
+                    if n == 0:
+                        break
+                    
+                    points = []
+                    for _ in range(n):
+                        tmp = stream.readline()
+                        subpoint = tuple(map(int, tmp.split()))
+                        points.append(subpoint)
 
+                    all_points.append(points)
+                    print(points)
+                line = stream.readline()
+        print(all_points)
+        self.ids.my_canvas.set_subset_points(all_points)
+        self.next()
+        self.ids.next_button.disabled = False
         self.dismiss_popup()
-        '''
-    def reload_mycanvas(self):
-        self.ids.my_canvas.reload()
+
+    def next(self):
+        try:
+            self.ids.my_canvas.next_points().save()
+        except NoNextPointsError:
+            self.ids.my_canvas.save()
+            self.ids.next_button.disabled = True
+            self.clean_canvas()
+        self.reload_mycanvas()
 
     def show_save(self):
         content = SaveDialog(save=self.save, cancel=self.dismiss_popup)
@@ -183,62 +168,33 @@ class RootWidget(BoxLayout):
 
     def save(self, path, filename):
         with open(os.path.join(path, filename), 'w') as stream:
-            stream.write(str(points))
-
+            stream.write(str(gPoints))
         self.dismiss_popup()
 
     def clean_canvas(self):
-        drawer.fill_white().save()
+        self.ids.my_canvas.fill_white().save()
         self.reload_mycanvas()
-        '''
-        # self.canvas.clear() # also clear bar
-        with self.canvas:
-            Color(rgba=[1,1,1,1])
-            Rectangle(pos=self.pos, size=(800,600))
-        '''
-        points.clear()
-    
+        gPoints.clear()
+
     def draw_voronoi(self):
-        print(points)
+        print(gPoints)
 
-        img = FullImage()
         #imgVoronoi = np.zeros(img.image.shape, dtype=img.image.dtype)
-        subdiv = cv2.Subdiv2D(rect = (0, 0, img.image.shape[1], img.image.shape[0]))
-        v = Voronoi(img.image)
+        subdiv = cv2.Subdiv2D(rect = (0, 0, self.ids.my_canvas.image.shape[1], self.ids.my_canvas.image.shape[0]))
 
-        for p in points:
+        for p in gPoints:
             subdiv.insert(p)
-            v.draw_voronoi(subdiv)
+            self.ids.my_canvas.voronoi_sample(subdiv)
 
             # Display as an animation
-            imgDisplay = np.hstack([img.image])
-            # cv2.imshow("Voro", imgDisplay)
-            # cv2.waitKey(500)
-        #sys.exit() # TODO
+            imgDisplay = np.hstack([self.ids.my_canvas.image])
+            cv2.imshow("Sample", imgDisplay)
+            cv2.waitKey(500)
+        cv2.destroyAllWindows()
 
-
-# class CustomBtn(Widget):
-
-#     pressed = ListProperty([0, 0])
-
-#     def on_touch_down(self, touch):
-#         if self.collide_point(*touch.pos):
-
-#             # draw point
-#             with self.canvas:
-#                 Color(1, 0, 0)
-#                 d = 5.0
-#                 Ellipse(pos=(touch.x - d / 2, touch.y - d / 2), size=(d, d))
-#             self.pressed = touch.pos
-
-#             # we consumed the touch. return False here to propagate
-#             # the touch further to the children.
-#             return True
-#         return super(CustomBtn, self).on_touch_down(touch)
-
-#     def on_pressed(self, instance, pos):
-#         print("pressed at {pos}".format(pos=pos))
-
+    def step_by_step(self):
+        pass
+        # draw line
 
 class MainApp(App):
     def build(self):

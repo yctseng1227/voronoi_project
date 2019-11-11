@@ -20,7 +20,17 @@ def points(lines):
     return points
 
 
-if __name__ == "__main__":
-    with open("./vd_testdata.in", encoding="big5") as f:
-        lines = f.readlines()
-        points(lines)
+def points_and_edges(lines):
+    points = []
+    edges = []
+    for line in lines:
+        numbers = re.findall(r"\d+", line)
+        numbers = tuple([int(number) for number in numbers])
+        if "P" in line:
+            points.append(numbers)
+        elif "E" in line:
+            point_1 = numbers[:2]
+            point_2 = numbers[2:]
+            edges.append((point_1, point_2))
+
+    return points, edges
