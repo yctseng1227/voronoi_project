@@ -49,6 +49,10 @@ class Painter(Image):
             self.draw_point(point)
         return self
 
+    def edge(self, point_1, point_2):
+        cv2.line(self.image, point_1, point_2, (255, 0, 0), 2)
+        return self
+        
     def fill_white(self):
         self.image = 255 * np.ones(shape=[self.h, self.w, 3], dtype=np.uint8)
         return self
@@ -187,14 +191,91 @@ class RootWidget(BoxLayout):
             self.ids.my_canvas.voronoi_sample(subdiv)
 
             # Display as an animation
-            imgDisplay = np.hstack([self.ids.my_canvas.image])
-            cv2.imshow("Sample", imgDisplay)
-            cv2.waitKey(500)
+            # imgDisplay = np.hstack([self.ids.my_canvas.image])
+            # cv2.imshow("Sample", imgDisplay)
+            # cv2.waitKey(500)
         cv2.destroyAllWindows()
+        self.ids.my_canvas.save()
+        self.reload_mycanvas()
+
+    def cercle_circonscrit(self, points):
+        (x1, y1), (x2, y2), (x3, y3) = points
+        A = np.array([[x3-x1,y3-y1],[x3-x2,y3-y2]])
+        Y = np.array([(x3**2 + y3**2 - x1**2 - y1**2),(x3**2+y3**2 - x2**2-y2**2)])
+        if np.linalg.det(A) == 0:
+            return False
+        Ainv = np.linalg.inv(A)
+        X = 0.5*np.dot(Ainv,Y)
+        x,y = X[0],X[1]
+        return (int(x), int(y))
+
+    def slope_intercept(self, p1, p2):
+        x1, y1 = p1[0], p1[1]
+        x2, y2 = p2[0], p2[1]
+        midx = (x1 + x2) / 2
+        midy = (y1 + y2) / 2
+
+        if y2 - y1 == 0:
+            return (midx, -1), -1, -1
+        a = (x1 - x2) / (y2 - y1)
+        b = midy - a * midx
+
+        return (midx, midy), a, b
+
+    # False: obtuse angle
+    def which_triangle(self, p1, p2, p3):
+        (x1, y1), (x2, y2), (x3, y3) = p1, p2, p3
+        res = (x1-x2) * (x1-x3) + (y1-y2) * (y1-y3)
+        return False if res < 0 else True
 
     def step_by_step(self):
-        pass
-        # draw line
+        if len(gPoints) == 3:
+            center = self.cercle_circonscrit(gPoints)
+            if not center:
+                pass
+            else:
+                mid, a, b = self.slope_intercept(gPoints[0], gPoints[1])
+                angle = self.which_triangle(gPoints[2], gPoints[0], gPoints[1])
+                if mid[1] != -1:
+                    x = 800 if center[0]<mid[0] else 0
+                    if(not angle): # if obtuse angle, reverse direction
+                        x = abs(x - 800)
+                    self.ids.my_canvas.edge(center, (x, int(a*x+b))).save()
+                else: # |
+                    y = 600 if center[1]>mid[1] else 0
+                    self.ids.my_canvas.edge(center, (center[0], y)).save()
+
+                mid, a, b = self.slope_intercept(gPoints[0], gPoints[2])
+                angle = self.which_triangle(gPoints[1], gPoints[0], gPoints[2])
+                if mid[1] != -1: 
+                    x = 800 if center[0]<mid[0] else 0
+                    if(not angle): # if obtuse angle, reverse direction
+                        x = abs(x - 800)
+                    self.ids.my_canvas.edge(center, (x, int(a*x+b))).save()
+                else: # |
+                    y = 600 if center[1]>mid[1] else 0
+                    self.ids.my_canvas.edge(center, (center[0], y)).save()
+
+                mid, a, b = self.slope_intercept(gPoints[1], gPoints[2])
+                angle = self.which_triangle(gPoints[0], gPoints[1], gPoints[2])
+                if mid[1] != -1:
+                    x = 800 if center[0]<mid[0] else 0
+                    if(not angle): # if obtuse angle, reverse direction
+                        x = abs(x - 800)
+                    self.ids.my_canvas.edge(center, (x, int(a*x+b))).save()
+                else: # |
+                    y = 600 if center[1]>mid[1] else 0
+                    self.ids.my_canvas.edge(center, (center[0], y)).save()
+
+                self.reload_mycanvas()
+
+        elif len(gPoints) == 2:
+            pass
+            mid, a, b = self.slope_intercept(gPoints[0], gPoints[1])
+            # self.ids.my_canvas.edge(a, b).save()
+            # self.reload_mycanvas()
+        else:
+            pass
 
 class MainApp(App):
     def build(self):
