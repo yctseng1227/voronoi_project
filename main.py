@@ -19,10 +19,9 @@ import numpy as np
 # import parser
 
 Window.size = (800, 647)
-#Config.set("graphics", "width", "800")
-#Config.set("graphics", "height", "647")
 
 gPoints = []
+gEdges = []
 
 class NoNextPointsError(RuntimeError):
     pass
@@ -172,7 +171,11 @@ class RootWidget(BoxLayout):
 
     def save(self, path, filename):
         with open(os.path.join(path, filename), 'w') as stream:
-            stream.write(str(gPoints))
+            string = '\n'.join([f'P {x} {y}' for (x, y) in gPoints])
+            stream.write(string+'\n')
+            string = '\n'.join([f'E {x1} {y1} {x2} {y2}' for (x1, y1, x2, y2) in gEdges])
+            stream.write(string)
+
         self.dismiss_popup()
 
     def clean_canvas(self):
@@ -229,10 +232,38 @@ class RootWidget(BoxLayout):
         return False if res < 0 else True
 
     def step_by_step(self):
+        global gPoints
+        s = set(gPoints) # keep out same points
+        gPoints = list(s)
+
         if len(gPoints) == 3:
             center = self.cercle_circonscrit(gPoints)
             if not center:
-                pass
+                if gPoints[0] == gPoints[1] == gPoints[2]:
+                    pass
+                elif gPoints[0][0] == gPoints[1][0] == gPoints[2][0]: # 3 points collinearity -x
+                    l = [ gPoints[0][1], gPoints[1][1], gPoints[2][1] ]
+                    l.sort()
+                    mid = (l[0]+l[1]) / 2
+                    self.ids.my_canvas.edge((0, int(mid)), (800, int(mid))).save()
+                    gEdges.append((0, int(mid), 800, int(mid)))
+
+                    mid = (l[1]+l[2]) / 2
+                    self.ids.my_canvas.edge((0, int(mid)), (800, int(mid))).save()
+                    gEdges.append((0, int(mid), 800, int(mid)))
+                elif gPoints[0][1] == gPoints[1][1] == gPoints[2][1]: # 3 points collinearity -y
+                    l = [ gPoints[0][0], gPoints[1][0], gPoints[2][0] ]
+                    l.sort()
+                    mid = (l[0]+l[1]) / 2
+                    self.ids.my_canvas.edge((int(mid), 0), (int(mid), 600)).save()
+                    gEdges.append((int(mid), 0, int(mid), 600))
+
+                    mid = (l[1]+l[2]) / 2
+                    self.ids.my_canvas.edge((int(mid), 0), (int(mid), 600)).save()
+                    gEdges.append((int(mid), 0, int(mid), 600))
+                else:
+                    pass
+                   
             else:
                 mid, a, b = self.slope_intercept(gPoints[0], gPoints[1])
                 angle = self.which_triangle(gPoints[2], gPoints[0], gPoints[1])
@@ -241,9 +272,11 @@ class RootWidget(BoxLayout):
                     if(not angle): # if obtuse angle, reverse direction
                         x = abs(x - 800)
                     self.ids.my_canvas.edge(center, (x, int(a*x+b))).save()
+                    gEdges.append((center[0], center[1], x, int(a*x+b)))
                 else: # |
                     y = 600 if center[1]>mid[1] else 0
                     self.ids.my_canvas.edge(center, (center[0], y)).save()
+                    gEdges.append((center[0], center[1], center[0], y))
 
                 mid, a, b = self.slope_intercept(gPoints[0], gPoints[2])
                 angle = self.which_triangle(gPoints[1], gPoints[0], gPoints[2])
@@ -252,9 +285,11 @@ class RootWidget(BoxLayout):
                     if(not angle): # if obtuse angle, reverse direction
                         x = abs(x - 800)
                     self.ids.my_canvas.edge(center, (x, int(a*x+b))).save()
+                    gEdges.append((center[0], center[1], x, int(a*x+b)))
                 else: # |
                     y = 600 if center[1]>mid[1] else 0
                     self.ids.my_canvas.edge(center, (center[0], y)).save()
+                    gEdges.append((center[0], center[1], center[0], y))
 
                 mid, a, b = self.slope_intercept(gPoints[1], gPoints[2])
                 angle = self.which_triangle(gPoints[0], gPoints[1], gPoints[2])
@@ -263,17 +298,23 @@ class RootWidget(BoxLayout):
                     if(not angle): # if obtuse angle, reverse direction
                         x = abs(x - 800)
                     self.ids.my_canvas.edge(center, (x, int(a*x+b))).save()
+                    gEdges.append((center[0], center[1], x, int(a*x+b)))
                 else: # |
                     y = 600 if center[1]>mid[1] else 0
                     self.ids.my_canvas.edge(center, (center[0], y)).save()
+                    gEdges.append((center[0], center[1], center[0], y))
 
-                self.reload_mycanvas()
+            self.reload_mycanvas()
 
         elif len(gPoints) == 2:
-            pass
             mid, a, b = self.slope_intercept(gPoints[0], gPoints[1])
-            # self.ids.my_canvas.edge(a, b).save()
-            # self.reload_mycanvas()
+            if mid[1] != -1:
+                self.ids.my_canvas.edge((0, int(b)), (800, int(a*800+b))).save()
+                gEdges.append((0, int(b), 800, int(a*800+b)))
+            else:
+                self.ids.my_canvas.edge((int(mid[0]), 0), (int(mid[0]), 600)).save()
+                gEdges.append((int(mid[0]), 0, int(mid[0]), 600))
+            self.reload_mycanvas()
         else:
             pass
 
