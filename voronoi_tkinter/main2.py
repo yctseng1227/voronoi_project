@@ -60,17 +60,20 @@ class RootWidget:
         for line in reader:
             if(line[0] == 'P'):
                 p, x, y = line.split()
-                self.canvas.draw_point((int(x), int(y)))
+                self.canvas.draw_point((float(x), float(y)))
             else:
                 p, x1, y1, x2, y2 = line.split()
-                self.canvas.draw_edge((int(x1), int(y1)), (int(x2), int(y2)))
+                self.canvas.draw_edge((float(x1), float(y1)), (float(x2), float(y2)))
 
     def save_file(self):
         f = fd.asksaveasfile(mode='w', defaultextension=".txt")
         if f is None:
             return
+        self.canvas.visible_points = sorted(self.canvas.visible_points , key=lambda k: [k[0], k[1]])
         string = '\n'.join([f'P {x} {y}' for (x, y) in self.canvas.visible_points])
         f.writelines(string+'\n')
+
+        self.canvas.visible_lines = sorted(self.canvas.visible_lines , key=lambda k: [k[0], k[1], k[2], k[3]])
         string = '\n'.join([f'E {x1} {y1} {x2} {y2}' for (x1, y1, x2, y2) in self.canvas.visible_lines])
         f.writelines(string+'\n')
         f.close()

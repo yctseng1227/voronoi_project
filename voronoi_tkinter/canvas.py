@@ -90,7 +90,7 @@ class VCanvas(Canvas):
         return False if res <= 0 else True
 
     def voronoi_diagram(self):
-        self.visible_points = sorted(self.visible_points , key=lambda k: [k[0], k[1]])
+        # self.visible_points = sorted(self.visible_points , key=lambda k: [k[0], k[1]])
         s = set(self.visible_points) # keep out same points
         gPoints = sorted(list(s) , key=lambda k: [k[0], k[1]])
         
@@ -130,7 +130,6 @@ class VCanvas(Canvas):
                     point1, point2 = (0, b), (800, a*800+b)
                     self.draw_edge(point1, point2)
                     self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
-
                    
             else:
                 mid, a, b = self.slope_intercept(gPoints[0], gPoints[1])
