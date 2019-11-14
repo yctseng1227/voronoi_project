@@ -87,7 +87,8 @@ class VCanvas(Canvas):
     def which_triangle(self, p1, p2, p3):
         (x1, y1), (x2, y2), (x3, y3) = p1, p2, p3
         res = (x1-x2) * (x1-x3) + (y1-y2) * (y1-y3)
-        return False if res <= 0 else True
+
+        return False if res < 0 else True
 
     def voronoi_diagram(self):
         # self.visible_points = sorted(self.visible_points , key=lambda k: [k[0], k[1]])
@@ -140,7 +141,7 @@ class VCanvas(Canvas):
                     elif center[0] > mid[0]:
                         x = 0
                     else:
-                        x = 800 if gPoints[2][0]+gPoints[2][1]>mid[0]+mid[1] else 0
+                        x = 800 if gPoints[2][0]+gPoints[2][1]<mid[0]+mid[1] else 0
 
                     if(not angle): # if obtuse angle, reverse direction
                         x = abs(x - 800)
@@ -163,7 +164,7 @@ class VCanvas(Canvas):
                     elif center[0] > mid[0]:
                         x = 0
                     else:
-                        x = 800 if gPoints[1][0]+gPoints[1][1]>mid[0]+mid[1] else 0
+                        x = 800 if gPoints[1][0]+gPoints[1][1]<mid[0]+mid[1] else 0
 
                     if(not angle): # if obtuse angle, reverse direction
                         x = abs(x - 800)
@@ -186,7 +187,7 @@ class VCanvas(Canvas):
                     elif center[0] > mid[0]:
                         x = 0
                     else:
-                        x = 800 if gPoints[0][0]+gPoints[0][1]>mid[0]+mid[1] else 0
+                        x = 800 if gPoints[0][0]+gPoints[0][1]<mid[0]+mid[1] else 0
 
                     if(not angle): # if obtuse angle, reverse direction
                         x = abs(x - 800)

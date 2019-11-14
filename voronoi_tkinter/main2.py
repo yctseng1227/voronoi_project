@@ -37,7 +37,7 @@ class RootWidget:
         print(openfilename)
 
         all_points = []
-        reader = open(openfilename)
+        reader = open(openfilename, encoding = 'utf8')
         for line in reader:
             if len(line) > 1 and line[0] != "#" and len(line.split()) == 1:
                 n = int(line.split()[0])
@@ -56,7 +56,7 @@ class RootWidget:
         openfilename = fd.askopenfilename(initialdir="./", title="Select file", filetypes=(("text files", "*.txt"), ("all files", "*.*")))
         print(openfilename)
 
-        reader = open(openfilename)
+        reader = open(openfilename, encoding = 'utf8')
         for line in reader:
             if(line[0] == 'P'):
                 p, x, y = line.split()
