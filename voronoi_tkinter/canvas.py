@@ -3,6 +3,8 @@ from itertools import combinations
 import tkinter as tk
 import numpy as np
 
+from scipy.spatial import ConvexHull, convex_hull_plot_2d
+
 class VCanvas(Canvas):
     def __init__(self, **kwargs):
         Canvas.__init__(self, **kwargs)
@@ -90,7 +92,7 @@ class VCanvas(Canvas):
 
         return False if res < 0 else True
 
-    def voronoi_diagram(self):
+    def voronoi_diagram_3points(self):
         # self.visible_points = sorted(self.visible_points , key=lambda k: [k[0], k[1]])
         s = set(self.visible_points) # keep out same points
         gPoints = sorted(list(s) , key=lambda k: [k[0], k[1]])
@@ -215,8 +217,173 @@ class VCanvas(Canvas):
         else:
             pass
 
+
+    def v3points(self, points):
+        # self.visible_points = sorted(self.visible_points , key=lambda k: [k[0], k[1]])
+        
+        if len(points) == 3:
+            center = self.cercle_circonscrit(points)
+            if not center:
+                if points[0][0] == points[1][0] == points[2][0]: # 3 points collinearity -x
+                    
+                    mid = (points[0][1]+points[1][1]) / 2
+                    point1, point2 = (0, mid), (800, mid)
+                    self.draw_edge(point1, point2)
+                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+
+                    mid = (points[1][1]+points[2][1]) / 2
+                    point1, point2 = (0, mid), (800, mid)
+                    self.draw_edge(point1, point2)
+                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                elif points[0][1] == points[1][1] == points[2][1]: # 3 points collinearity -y
+
+                    mid = (points[0][0]+points[1][0]) / 2
+                    print(points[0][0], points[1][0], mid)
+                    point1, point2 = (mid, 0), (mid, 600)
+                    self.draw_edge(point1, point2)
+                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+
+                    mid = (points[1][0]+points[2][0]) / 2
+                    point1, point2 = (mid, 0), (mid, 600)
+                    self.draw_edge(point1, point2)
+                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                else:
+                    mid, a, b = self.slope_intercept(points[0], points[1])
+                    point1, point2 = (0, b), (800, a*800+b)
+                    self.draw_edge(point1, point2)
+                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+
+                    mid, a, b = self.slope_intercept(points[1], points[2])
+                    point1, point2 = (0, b), (800, a*800+b)
+                    self.draw_edge(point1, point2)
+                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                   
+            else:
+                mid, a, b = self.slope_intercept(points[0], points[1])
+                angle = self.which_triangle(points[2], points[0], points[1])
+                if a != -1e9:
+                    if center[0] < mid[0]:
+                        x = 800
+                    elif center[0] > mid[0]:
+                        x = 0
+                    else:
+                        x = 800 if points[2][0]+points[2][1]<mid[0]+mid[1] else 0
+
+                    if(not angle): # if obtuse angle, reverse direction
+                        x = abs(x - 800)
+                    point1, point2 = center, (x, a*x+b)
+                    self.draw_edge(point1, point2)
+                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                else: # |
+                    y = 600 if center[1]<mid[1] else 0
+                    if(not angle): # if obtuse angle, reverse direction
+                        y = abs(y - 600)
+                    point1, point2 = center, (center[0], y)
+                    self.draw_edge(point1, point2)
+                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+
+                mid, a, b = self.slope_intercept(points[0], points[2])
+                angle = self.which_triangle(points[1], points[0], points[2])
+                if a != -1e9: 
+                    if center[0] < mid[0]:
+                        x = 800
+                    elif center[0] > mid[0]:
+                        x = 0
+                    else:
+                        x = 800 if points[1][0]+points[1][1]<mid[0]+mid[1] else 0
+
+                    if(not angle): # if obtuse angle, reverse direction
+                        x = abs(x - 800)
+                    point1, point2 = center, (x, a*x+b)
+                    self.draw_edge(point1, point2)
+                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                else: # |
+                    y = 600 if center[1]<mid[1] else 0
+                    if(not angle): # if obtuse angle, reverse direction
+                        y = abs(y - 600)
+                    point1, point2 = center, (center[0], y)
+                    self.draw_edge(point1, point2)
+                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+
+                mid, a, b = self.slope_intercept(points[1], points[2])
+                angle = self.which_triangle(points[0], points[1], points[2])
+                if a != -1e9:
+                    if center[0] < mid[0]:
+                        x = 800
+                    elif center[0] > mid[0]:
+                        x = 0
+                    else:
+                        x = 800 if points[0][0]+points[0][1]<mid[0]+mid[1] else 0
+
+                    if(not angle): # if obtuse angle, reverse direction
+                        x = abs(x - 800)
+                    point1, point2 = center, (x, a*x+b)
+                    self.draw_edge(point1, point2)
+                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                else: # |
+                    y = 600 if center[1]<mid[1] else 0
+                    if(not angle): # if obtuse angle, reverse direction
+                        y = abs(y - 600)
+                    point1, point2 = center, (center[0], y)
+                    self.draw_edge(point1, point2)
+                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+
+        elif len(points) == 2:
+            mid, a, b = self.slope_intercept(points[0], points[1])
+            if a != -1e9:
+                point1, point2 = (0, b), (800, a*800+b)
+                self.draw_edge(point1, point2)
+                self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+            else:
+                point1, point2 = (mid[0], 0), (mid[0], 600)
+                self.draw_edge(point1, point2)
+                self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+        else:
+            pass
+
+    def merge(self, p1, p2):
+
+        if len(p1) < 3:
+            if len(p1) == 2:
+                self.draw_edge(p1[0], p1[1])
+        else:
+            hull = ConvexHull(p1)
+            print(hull.vertices)
+            _list = list(hull.vertices)
+            for x1, x2 in zip(_list, _list[1:] + _list[:1]):
+                self.draw_edge(p1[x1], p1[x2])
+
+        if len(p2) < 3:
+            if len(p2) == 2:
+                self.draw_edge(p2[0], p2[1])
+        else:
+            hull = ConvexHull(p2)
+            _list = list(hull.vertices)
+            for x1, x2 in zip(_list, _list[1:] + _list[:1]):
+                self.draw_edge(p2[x1], p2[x2])
+
+        # self.v3points(p1)
+        # self.v3points(p2)
+
+    def recursive(self, p1, p2):
+        if (len(p1) <= 3 and len(p2) <= 3):
+            self.merge(p1, p2)
+            return
+
+        self.recursive(p1[:int(len(p1)/2)], p1[int(len(p1)/2):])
+        self.recursive(p2[:int(len(p2)/2)], p2[int(len(p2)/2):])
+
+        # p = p1 + p2
+        # hull = ConvexHull(p)
+        # for i in range(0, len(hull.vertices)):
+        #     self.draw_edge(p[ hull.vertices[i] ], p[ hull.vertices[(i+1)%len(hull.vertices)] ])
+        return
+
     def voronoi_sample(self):
-        pass
+        s = set(self.visible_points) # keep out same points
+        gPoints = sorted(list(s) , key=lambda k: [k[0], k[1]])
+        
+        self.recursive(gPoints[:int(len(gPoints)/2)], gPoints[int(len(gPoints)/2):])
 
 if __name__ == "__main__":
     pass

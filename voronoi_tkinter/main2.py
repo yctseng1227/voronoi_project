@@ -28,8 +28,8 @@ class RootWidget:
         ttk.Button(text="LOAD", command=self.open_file).pack(side=tk.LEFT)
         ttk.Button(text="SAVE", command=self.save_file).pack(side=tk.LEFT)
         ttk.Button(text="NEXT", command=self.canvas.next_points).pack(side=tk.LEFT)
-        ttk.Button(text="STEP", command=self.canvas.voronoi_sample, state=DISABLED).pack(side=tk.LEFT)
-        ttk.Button(text="RUN", command=self.canvas.voronoi_diagram).pack(side=tk.LEFT)
+        ttk.Button(text="STEP", command=self.canvas.voronoi_sample).pack(side=tk.LEFT)
+        ttk.Button(text="RUN", command=self.canvas.voronoi_diagram_3points).pack(side=tk.LEFT)
         ttk.Button(text="CLEAR", command=self.canvas.clean_canvas).pack(side=tk.LEFT)
 
     def open_file(self):
