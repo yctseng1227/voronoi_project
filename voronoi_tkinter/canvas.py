@@ -2,6 +2,7 @@ from tkinter import Canvas
 from itertools import combinations
 import tkinter as tk
 import numpy as np
+import random
 
 from scipy.spatial import ConvexHull, convex_hull_plot_2d
 
@@ -21,10 +22,10 @@ class VCanvas(Canvas):
         (x0, y0), (x1, y1) = (x0 - 2, y0 - 2), (x0 + 2, y0 + 2)
         self.create_oval(x0, y0, x1, y1, fill="black")
 
-    def draw_edge(self, point1, point2):
+    def draw_edge(self, point1, point2, color="black"):
         x0, y0 = point1
         x1, y1 = point2
-        self.create_line(x0, y0, x1, y1, fill="black", width=3)
+        self.create_line(x0, y0, x1, y1, fill=color, width=3)
 
     def click_point(self, event):
         point = (event.x, event.y)
@@ -56,7 +57,15 @@ class VCanvas(Canvas):
             self.draw_point(point)
         self.visible_points = subset_points
 
-    # voronoi
+    def random_points(self):
+        # self.clean_canvas()
+        for _ in range(6):
+            points = ((int(random.random()*800), int(random.random()*600)))
+            self.add_visible_points(points)
+            self.draw_point(points)
+
+
+    # voronoi--------------------------------------------------------------------------
     def cercle_circonscrit(self, points):
         (x1, y1), (x2, y2), (x3, y3) = points
         A = np.array([[x3-x1,y3-y1],[x3-x2,y3-y2]])
@@ -345,25 +354,42 @@ class VCanvas(Canvas):
 
         if len(p1) < 3:
             if len(p1) == 2:
-                self.draw_edge(p1[0], p1[1])
+                self.draw_edge(p1[0], p1[1], "blue")
         else:
             hull = ConvexHull(p1)
-            print(hull.vertices)
             _list = list(hull.vertices)
             for x1, x2 in zip(_list, _list[1:] + _list[:1]):
-                self.draw_edge(p1[x1], p1[x2])
+                self.draw_edge(p1[x1], p1[x2], "blue")
 
         if len(p2) < 3:
             if len(p2) == 2:
-                self.draw_edge(p2[0], p2[1])
+                self.draw_edge(p2[0], p2[1], "blue")
         else:
             hull = ConvexHull(p2)
             _list = list(hull.vertices)
             for x1, x2 in zip(_list, _list[1:] + _list[:1]):
-                self.draw_edge(p2[x1], p2[x2])
+                self.draw_edge(p2[x1], p2[x2], "blue")
 
-        # self.v3points(p1)
-        # self.v3points(p2)
+        self.v3points(p1)
+        self.v3points(p2)
+
+        p1 = sorted(list(p1) , key=lambda k: [k[1], k[0]])
+        p2 = sorted(list(p2) , key=lambda k: [k[1], k[0]])
+        
+        self.draw_edge(p1[0], p2[0], "yellow")
+
+        mid, a, b = self.slope_intercept(p1[0], p2[0])
+        if a != -1e9:
+            if a > 0:
+                point1, point2 = (0, b), (mid[0], mid[1])
+            else:
+                point1, point2 = (mid[0], mid[1]), (800, a*800+b)
+            self.draw_edge(point1, point2, "red")
+        else:
+            point1, point2 = (mid[0], 0), (mid[0], 600)
+            self.draw_edge(point1, point2, "red")
+        print(self.visible_lines)
+
 
     def recursive(self, p1, p2):
         if (len(p1) <= 3 and len(p2) <= 3):
@@ -380,6 +406,8 @@ class VCanvas(Canvas):
         return
 
     def voronoi_sample(self):
+        if len(self.visible_points) == 0:
+            return
         s = set(self.visible_points) # keep out same points
         gPoints = sorted(list(s) , key=lambda k: [k[0], k[1]])
         

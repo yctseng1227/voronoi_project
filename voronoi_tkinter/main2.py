@@ -26,6 +26,7 @@ class RootWidget:
 
         ttk.Button(text="IMPORT", command=self.open_PL_file).pack(side=tk.LEFT)
         ttk.Button(text="LOAD", command=self.open_file).pack(side=tk.LEFT)
+        ttk.Button(text="RANDOM", command=self.canvas.random_points).pack(side=tk.LEFT)
         ttk.Button(text="SAVE", command=self.save_file).pack(side=tk.LEFT)
         ttk.Button(text="NEXT", command=self.canvas.next_points).pack(side=tk.LEFT)
         ttk.Button(text="STEP", command=self.canvas.voronoi_sample).pack(side=tk.LEFT)
