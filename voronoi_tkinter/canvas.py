@@ -106,6 +106,8 @@ class VCanvas(Canvas):
         s = set(self.visible_points) # keep out same points
         gPoints = sorted(list(s) , key=lambda k: [k[0], k[1]])
         
+        all_line = []
+
         if len(gPoints) == 3:
             center = self.cercle_circonscrit(gPoints)
             if not center:
@@ -113,35 +115,40 @@ class VCanvas(Canvas):
                     
                     mid = (gPoints[0][1]+gPoints[1][1]) / 2
                     point1, point2 = (0, mid), (800, mid)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
+                    # self.draw_edge(point1, point2)
+                    # self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
 
                     mid = (gPoints[1][1]+gPoints[2][1]) / 2
                     point1, point2 = (0, mid), (800, mid)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
+                    # self.draw_edge(point1, point2)
+                    # self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
                 elif gPoints[0][1] == gPoints[1][1] == gPoints[2][1]: # 3 points collinearity -y
 
                     mid = (gPoints[0][0]+gPoints[1][0]) / 2
-                    print(gPoints[0][0], gPoints[1][0], mid)
                     point1, point2 = (mid, 0), (mid, 600)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
+                    # self.draw_edge(point1, point2)
+                    # self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
 
                     mid = (gPoints[1][0]+gPoints[2][0]) / 2
                     point1, point2 = (mid, 0), (mid, 600)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
+                    # self.draw_edge(point1, point2)
+                    # self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
                 else:
                     mid, a, b = self.slope_intercept(gPoints[0], gPoints[1])
                     point1, point2 = (0, b), (800, a*800+b)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
+                    # self.draw_edge(point1, point2)
+                    # self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
 
                     mid, a, b = self.slope_intercept(gPoints[1], gPoints[2])
                     point1, point2 = (0, b), (800, a*800+b)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
+                    # self.draw_edge(point1, point2)
+                    # self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
                    
             else:
                 mid, a, b = self.slope_intercept(gPoints[0], gPoints[1])
@@ -157,15 +164,17 @@ class VCanvas(Canvas):
                     if(not angle): # if obtuse angle, reverse direction
                         x = abs(x - 800)
                     point1, point2 = center, (x, a*x+b)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
+                    # self.draw_edge(point1, point2)
+                    # self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
                 else: # |
                     y = 600 if center[1]<mid[1] else 0
                     if(not angle): # if obtuse angle, reverse direction
                         y = abs(y - 600)
                     point1, point2 = center, (center[0], y)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
+                    # self.draw_edge(point1, point2)
+                    # self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
 
                 mid, a, b = self.slope_intercept(gPoints[0], gPoints[2])
                 angle = self.which_triangle(gPoints[1], gPoints[0], gPoints[2])
@@ -180,15 +189,17 @@ class VCanvas(Canvas):
                     if(not angle): # if obtuse angle, reverse direction
                         x = abs(x - 800)
                     point1, point2 = center, (x, a*x+b)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
+                    # self.draw_edge(point1, point2)
+                    # self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
                 else: # |
                     y = 600 if center[1]<mid[1] else 0
                     if(not angle): # if obtuse angle, reverse direction
                         y = abs(y - 600)
                     point1, point2 = center, (center[0], y)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
+                    # self.draw_edge(point1, point2)
+                    # self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
 
                 mid, a, b = self.slope_intercept(gPoints[1], gPoints[2])
                 angle = self.which_triangle(gPoints[0], gPoints[1], gPoints[2])
@@ -203,33 +214,43 @@ class VCanvas(Canvas):
                     if(not angle): # if obtuse angle, reverse direction
                         x = abs(x - 800)
                     point1, point2 = center, (x, a*x+b)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
+                    # self.draw_edge(point1, point2)
+                    # self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
                 else: # |
                     y = 600 if center[1]<mid[1] else 0
                     if(not angle): # if obtuse angle, reverse direction
                         y = abs(y - 600)
                     point1, point2 = center, (center[0], y)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
+                    # self.draw_edge(point1, point2)
+                    # self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
 
         elif len(gPoints) == 2:
             mid, a, b = self.slope_intercept(gPoints[0], gPoints[1])
             if a != -1e9:
                 point1, point2 = (0, b), (800, a*800+b)
-                self.draw_edge(point1, point2)
-                self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                all_line.append([point1, point2])
+                # self.draw_edge(point1, point2)
+                # self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
             else:
                 point1, point2 = (mid[0], 0), (mid[0], 600)
-                self.draw_edge(point1, point2)
-                self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                all_line.append([point1, point2])
+                # self.draw_edge(point1, point2)
+                # self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
         else:
             pass
+
+        for i in all_line:
+            self.draw_edge(i[0], i[1])
+            self.visible_lines.append((i[0][0], i[0][1], i[1][0], i[1][1]))
+        
 
 
     def v3points(self, points):
         # self.visible_points = sorted(self.visible_points , key=lambda k: [k[0], k[1]])
-        
+        all_line = []
+
         if len(points) == 3:
             center = self.cercle_circonscrit(points)
             if not center:
@@ -237,35 +258,30 @@ class VCanvas(Canvas):
                     
                     mid = (points[0][1]+points[1][1]) / 2
                     point1, point2 = (0, mid), (800, mid)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
 
                     mid = (points[1][1]+points[2][1]) / 2
                     point1, point2 = (0, mid), (800, mid)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
+
                 elif points[0][1] == points[1][1] == points[2][1]: # 3 points collinearity -y
 
                     mid = (points[0][0]+points[1][0]) / 2
-                    print(points[0][0], points[1][0], mid)
                     point1, point2 = (mid, 0), (mid, 600)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
 
                     mid = (points[1][0]+points[2][0]) / 2
                     point1, point2 = (mid, 0), (mid, 600)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
+        
                 else:
                     mid, a, b = self.slope_intercept(points[0], points[1])
                     point1, point2 = (0, b), (800, a*800+b)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
 
                     mid, a, b = self.slope_intercept(points[1], points[2])
                     point1, point2 = (0, b), (800, a*800+b)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
                    
             else:
                 mid, a, b = self.slope_intercept(points[0], points[1])
@@ -281,15 +297,13 @@ class VCanvas(Canvas):
                     if(not angle): # if obtuse angle, reverse direction
                         x = abs(x - 800)
                     point1, point2 = center, (x, a*x+b)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
                 else: # |
                     y = 600 if center[1]<mid[1] else 0
                     if(not angle): # if obtuse angle, reverse direction
                         y = abs(y - 600)
                     point1, point2 = center, (center[0], y)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
 
                 mid, a, b = self.slope_intercept(points[0], points[2])
                 angle = self.which_triangle(points[1], points[0], points[2])
@@ -304,15 +318,13 @@ class VCanvas(Canvas):
                     if(not angle): # if obtuse angle, reverse direction
                         x = abs(x - 800)
                     point1, point2 = center, (x, a*x+b)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
                 else: # |
                     y = 600 if center[1]<mid[1] else 0
                     if(not angle): # if obtuse angle, reverse direction
                         y = abs(y - 600)
                     point1, point2 = center, (center[0], y)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
 
                 mid, a, b = self.slope_intercept(points[1], points[2])
                 angle = self.which_triangle(points[0], points[1], points[2])
@@ -327,28 +339,47 @@ class VCanvas(Canvas):
                     if(not angle): # if obtuse angle, reverse direction
                         x = abs(x - 800)
                     point1, point2 = center, (x, a*x+b)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
                 else: # |
                     y = 600 if center[1]<mid[1] else 0
                     if(not angle): # if obtuse angle, reverse direction
                         y = abs(y - 600)
                     point1, point2 = center, (center[0], y)
-                    self.draw_edge(point1, point2)
-                    self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                    all_line.append([point1, point2])
 
         elif len(points) == 2:
             mid, a, b = self.slope_intercept(points[0], points[1])
             if a != -1e9:
                 point1, point2 = (0, b), (800, a*800+b)
-                self.draw_edge(point1, point2)
-                self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                all_line.append([point1, point2])
             else:
                 point1, point2 = (mid[0], 0), (mid[0], 600)
-                self.draw_edge(point1, point2)
-                self.visible_lines.append((point1[0], point1[1], point2[0], point2[1]))
+                all_line.append([point1, point2])
         else:
             pass
+
+        for i in all_line:
+            self.draw_edge(i[0], i[1])
+            #self.visible_lines.append((i[0][0], i[0][1], i[1][0], i[1][1]))
+        
+        return all_line
+
+    def find_intersection(self, line1, line2):
+        (x1, y1), (x2, y2) = line1
+        (x3, y3), (x4, y4) = line2
+        
+        # find line1: y = a1 * x + b1
+        a1 = (y1-y2) / (x1-x2)
+        b1 = y1 - a1 * x1
+        
+        # find line2: y = a2 * x + b2
+        a2 = (y3-y4) / (x3-x4)
+        b2 = y3 - a2 * x3
+
+        x = (b1-b2) / (a2 - a1)
+        y = a1 * x + b1
+        
+        return (x, y)
 
     def merge(self, p1, p2):
 
@@ -370,13 +401,16 @@ class VCanvas(Canvas):
             for x1, x2 in zip(_list, _list[1:] + _list[:1]):
                 self.draw_edge(p2[x1], p2[x2], "blue")
 
-        self.v3points(p1)
-        self.v3points(p2)
+        voro_line_set_1 = self.v3points(p1)
+        voro_line_set_2 = self.v3points(p2)
 
         p1 = sorted(list(p1) , key=lambda k: [k[1], k[0]])
         p2 = sorted(list(p2) , key=lambda k: [k[1], k[0]])
         
+        
         self.draw_edge(p1[0], p2[0], "yellow")
+
+        hyperplane = []
 
         mid, a, b = self.slope_intercept(p1[0], p2[0])
         if a != -1e9:
@@ -384,11 +418,28 @@ class VCanvas(Canvas):
                 point1, point2 = (0, b), (mid[0], mid[1])
             else:
                 point1, point2 = (mid[0], mid[1]), (800, a*800+b)
-            self.draw_edge(point1, point2, "red")
+            hyperplane.append([point1, point2])
         else:
             point1, point2 = (mid[0], 0), (mid[0], 600)
-            self.draw_edge(point1, point2, "red")
-        print(self.visible_lines)
+            hyperplane.append([point1, point2])
+
+
+        cross_p1 = (1e9, 1e9)
+        cross_p2 = (1e9, 1e9)
+        for i in voro_line_set_1:
+            tmp = self.find_intersection(hyperplane[0], i)
+            cross_p1 = tmp if tmp[1] < cross_p1[1] else cross_p1
+        for i in voro_line_set_2:
+            tmp = self.find_intersection(hyperplane[0], i)
+            cross_p2 = tmp if tmp[1] < cross_p2[1] else cross_p2
+
+        if cross_p1[0] < cross_p2[0]:
+            hyperplane[0][1] = cross_p1
+        else:
+            hyperplane[0][1] = cross_p2
+
+        for i in hyperplane:
+            self.draw_edge(i[0], i[1], "red")
 
 
     def recursive(self, p1, p2):
