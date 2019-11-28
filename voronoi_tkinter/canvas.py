@@ -59,7 +59,7 @@ class VCanvas(Canvas):
 
     def random_points(self):
         # self.clean_canvas()
-        for _ in range(6):
+        for _ in range(500):
             points = ((int(random.random()*800), int(random.random()*600)))
             self.add_visible_points(points)
             self.draw_point(points)
@@ -407,11 +407,10 @@ class VCanvas(Canvas):
         p1 = sorted(list(p1) , key=lambda k: [k[1], k[0]])
         p2 = sorted(list(p2) , key=lambda k: [k[1], k[0]])
         
-        
-        self.draw_edge(p1[0], p2[0], "yellow")
-
         hyperplane = []
+        test_line = []
 
+        # decide the first line
         mid, a, b = self.slope_intercept(p1[0], p2[0])
         if a != -1e9:
             if a > 0:
@@ -423,7 +422,7 @@ class VCanvas(Canvas):
             point1, point2 = (mid[0], 0), (mid[0], 600)
             hyperplane.append([point1, point2])
 
-
+        # decide the order with p1 & p2
         cross_p1 = (1e9, 1e9)
         cross_p2 = (1e9, 1e9)
         for i in voro_line_set_1:
@@ -435,9 +434,32 @@ class VCanvas(Canvas):
 
         if cross_p1[0] < cross_p2[0]:
             hyperplane[0][1] = cross_p1
+            for i, j in zip(p1, p2):
+                test_line.append(i)
+                test_line.append(j)
         else:
             hyperplane[0][1] = cross_p2
+            for i, j in zip(p2, p1):
+                test_line.append(i)
+                test_line.append(j)
 
+        for i in range(len(test_line)-1):
+            self.draw_edge(test_line[i], test_line[i+1], "yellow")
+
+            i_1 = i + 1
+            i_2 = i
+
+            mid, a, b = self.slope_intercept(p1[i_1], p2[i_2])
+
+            if a != -1e9:
+                point1, point2 = (hyperplane[i_1-1][1][0], a*hyperplane[i_1-1][1][1]), (mid[0], mid[1])
+                hyperplane.append([point1, point2])
+            else:
+                point1, point2 = (mid[0], 0), (mid[0], 600)
+                hyperplane.append([point1, point2])
+
+            self.draw_edge(hyperplane[i][0], hyperplane[i][1], "red")
+    
         for i in hyperplane:
             self.draw_edge(i[0], i[1], "red")
 
