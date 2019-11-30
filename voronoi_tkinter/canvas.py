@@ -259,9 +259,6 @@ class VCanvas(Canvas):
         if not ( min(x1,x2)<=max(x3,x4) and min(y3,y4)<=max(y1,y2)\
             and min(x3,x4)<=max(x1,x2) and min(y1,y2)<=max(y3,y4) ):
             return None
-        # if x1-x2 == 0 or x3-x4 == 0:
-        #     return None
-
 
         # find line1: y = a1 * x + b1
         a1 = (y1-y2) / (x1-x2)
@@ -301,14 +298,25 @@ class VCanvas(Canvas):
         # if len(p_set1) >= 6:
         #     return
 
-        p_set1 = sorted(list(p_set1) , key=lambda k: [k[1], k[0]])
-        p_set2 = sorted(list(p_set2) , key=lambda k: [k[1], k[0]])
-        #p_set = sorted(list(p_set1+p_set2) , key=lambda k: [k[0], k[1]])
+        #p_set1 = sorted(list(p_set1) , key=lambda k: [k[1], k[0]])
+        #p_set2 = sorted(list(p_set2) , key=lambda k: [k[1], k[0]])
+        p_set1 = sorted(list(p_set1) , key=lambda k: [k[0], k[1]])
+        p_set2 = sorted(list(p_set2) , key=lambda k: [k[0], k[1]])
+        mid_point = ((p_set1[-1][0] + p_set2[0][0]) / 2, 0)
+        arr = []
+        for i in p_set1:
+            arr.append(self.line_distance(mid_point, i))
+        p_set1 = [x for _,x in sorted(zip(arr, p_set1))]
+        arr = []
+        for i in p_set2:
+            arr.append(self.line_distance(mid_point, i))
+        p_set2 = [x for _,x in sorted(zip(arr, p_set2))]
+        
         result = []
         hyperplane = []
         ref_point = [ p_set1[0], p_set2[0] ]
-        #ref_point = [ p_set[int(len(p_set)/2)-1], p_set[int(len(p_set)/2)] ]
         all_line = l_set1 + l_set2
+        
 
         # decide the first line
         mid, a, b = self.slope_intercept(ref_point[0], ref_point[1])
@@ -322,8 +330,11 @@ class VCanvas(Canvas):
             point1, point2 = (mid[0], 0), (mid[0], 600)
             hyperplane.append([point1, point2, ref_point[0], ref_point[1]])
 
+        if len(p_set1) == 6:
+            return 
+
         while True:
-        #for _ in range(3):
+        #for _ in range(1):
             # decide the order with p_set1 & p_set2
             cross_point = (1e9, 1e9)
             which_line = []
