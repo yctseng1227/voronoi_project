@@ -16,7 +16,7 @@ class VCanvas(Canvas):
 
         self.subset_points = iter([])
         self.visible_points = []
-        self.visible_lines = []
+        #self.visible_lines = []
         self.bind("<Button-1>", self.click_point)
 
     def draw_point(self, point, color="black"):
@@ -192,7 +192,7 @@ class VCanvas(Canvas):
                     if(not angle): # if obtuse angle, reverse direction
                         y = abs(y - 600)
                     point1, point2 = center, (center[0], y)
-                    all_line.append([point1, point2], points[0], points[1])
+                    all_line.append([point1, point2, points[0], points[1]])
 
                 mid, a, b = self.slope_intercept(points[0], points[2])
                 angle = self.which_triangle(points[1], points[0], points[2])
@@ -247,19 +247,40 @@ class VCanvas(Canvas):
         else:
             pass
 
-        # for i in all_line:
-        #     self.draw_edge(i[0], i[1])
-        #     self.visible_lines.append((i[0][0], i[0][1], i[1][0], i[1][1]))
+        for i in all_line:
+            self.draw_edge(i[0], i[1])
+            # self.visible_lines.append((i[0][0], i[0][1], i[1][0], i[1][1]))
         return all_line
 
+    def prune_check(self, point, all_line):
+        lines = []
+        print(point)
+        print("QQQQQ", all_line)
+        for i in all_line:
+            if point == i[0] or point == i[1]:
+                lines.append(i)
+        if len(lines) == 1:
+            print("######", lines[-1])
+            return lines[-1]
+        return None
+
+    # 找兩線段間交點
     def find_intersection(self, line1, line2):
         (x1, y1), (x2, y2) = line1
         (x3, y3), (x4, y4) = line2
 
+        # 用向量判斷是否有交點
+        v1 = ( (x3-x1), (y3-y1) )
+        v2 = ( (x4-x1), (y4-y1) )
+        vm = ( (x2-x1), (y2-y1) )
+        if (v1[0]*vm[1] - vm[0]*v1[1]) * (v2[0]*vm[1] - vm[0]*v2[1]) > 0:
+            return None
+        # 用點座標的相對位置判斷是否有交點
         if not ( min(x1,x2)<=max(x3,x4) and min(y3,y4)<=max(y1,y2)\
             and min(x3,x4)<=max(x1,x2) and min(y1,y2)<=max(y3,y4) ):
             return None
 
+        # 用線方程式找交點
         # find line1: y = a1 * x + b1
         a1 = (y1-y2) / (x1-x2)
         b1 = y1 - a1 * x1
@@ -272,11 +293,13 @@ class VCanvas(Canvas):
         y = a1 * x + b1
         if 0 <= x <= 800 and 0 <= y <= 600:
             return (x, y)
-        else:
-            return None
+        return None
         
 
     def merge(self, p_set1, l_set1, p_set2, l_set2):
+        self.clean_canvas()
+
+        # convex hull
         if len(p_set1) < 3:
             if len(p_set1) == 2:
                 self.draw_edge(p_set1[0], p_set1[1], "blue")
@@ -295,14 +318,12 @@ class VCanvas(Canvas):
             for x1, x2 in zip(_list, _list[1:] + _list[:1]):
                 self.draw_edge(p_set2[x1], p_set2[x2], "blue")
 
-        # if len(p_set1) >= 6:
-        #     return
-
-        #p_set1 = sorted(list(p_set1) , key=lambda k: [k[1], k[0]])
-        #p_set2 = sorted(list(p_set2) , key=lambda k: [k[1], k[0]])
+        # 將所有point排序後 找左區塊最右點and右區塊最左點 的中垂線x=k
         p_set1 = sorted(list(p_set1) , key=lambda k: [k[0], k[1]])
         p_set2 = sorted(list(p_set2) , key=lambda k: [k[0], k[1]])
         mid_point = ((p_set1[-1][0] + p_set2[0][0]) / 2, 0)
+
+        # 利用(k, 0)和所有點比較距離 找左右區塊最近的點當作最初ref_point
         arr = []
         for i in p_set1:
             arr.append(self.line_distance(mid_point, i))
@@ -312,6 +333,7 @@ class VCanvas(Canvas):
             arr.append(self.line_distance(mid_point, i))
         p_set2 = [x for _,x in sorted(zip(arr, p_set2))]
         
+        # init
         result = []
         hyperplane = []
         ref_point = [ p_set1[0], p_set2[0] ]
@@ -321,45 +343,70 @@ class VCanvas(Canvas):
         # decide the first line
         mid, a, b = self.slope_intercept(ref_point[0], ref_point[1])
         if a != -1e9:
-            if a > 0:
-                point1, point2 = (0, b), (mid[0], mid[1])
-            else:
-                point1, point2 = (mid[0], mid[1]), (800, a*800+b)
+            point1, point2 = (0, b), (800, a*800+b)
+            # y: p1[1] need smaller than p2[1]
+            if point1[1] > point2[1]:
+                point1, point2 = point2, point1
             hyperplane.append([point1, point2, ref_point[0], ref_point[1]])
         else:
             point1, point2 = (mid[0], 0), (mid[0], 600)
             hyperplane.append([point1, point2, ref_point[0], ref_point[1]])
 
+        aaa = 10
         if len(p_set1) == 6:
-            return 
-
-        while True:
-        #for _ in range(1):
+            aaa = 10
+        #while True:
+        for _ in range(aaa):
             # decide the order with p_set1 & p_set2
             cross_point = (1e9, 1e9)
             which_line = []
-
+            
+            # 找出 HP和所有線段的交點, 取y值最小交點
             for i in all_line:
                 tmp = self.find_intersection((hyperplane[-1][0], hyperplane[-1][1]), (i[0], i[1]))
-                if tmp != None and tmp[1] < cross_point[1]:
+                if tmp != None and (tmp[1] < cross_point[1]):
                     cross_point = tmp
                     which_line = i
-            
+
+            # 找無交點
             if cross_point == (1e9, 1e9):
                 break
+            # 有交點, 修正HP線段終點
             hyperplane[-1][1] = cross_point
 
-
+            # 和某線段有交點, 修正該線段的起點/終點, 並放入result
             for i in all_line:
                 if which_line == i:
+                    tmp = i
                     if self.line_distance(i[0], i[3]) < self.line_distance(i[1], i[3]):
-                        i[1] = cross_point
-                    else:
-                        i[0] = cross_point
-                    result.append(i)
-                    all_line.remove(i)
-                    break
+                        all_line.remove(i)
 
+                        res = self.prune_check(tmp[1], all_line+result)
+                        if res != None:
+                            all_line.remove(res)
+
+                        res = self.prune_check(tmp[0], all_line+result)
+                        if res != None:
+                            all_line.remove(res)
+                        else:
+                            tmp[1] = cross_point
+                            result.append(tmp)
+                    else:
+                        all_line.remove(i)
+
+                        res = self.prune_check(tmp[0], all_line+result)
+                        if res != None:
+                            all_line.remove(res)
+
+                        res = self.prune_check(tmp[1], all_line+result)
+                        if res != None:
+                            all_line.remove(res)
+                        else:
+                            tmp[0] = cross_point
+                            result.append(tmp)
+                    break
+            
+            # decide the next ref_point
             if ref_point[0] == which_line[2]:
                 ref_point[0] = which_line[3]
             elif ref_point[0] == which_line[3]:
@@ -368,7 +415,6 @@ class VCanvas(Canvas):
                 ref_point[1] = which_line[3]
             else:
                 ref_point[1] = which_line[2]
-            # self.draw_edge(ref_point[0], ref_point[1], "green")
 
             # decide the next line
             mid, a, b = self.slope_intercept(ref_point[0], ref_point[1])
@@ -381,9 +427,13 @@ class VCanvas(Canvas):
             else:
                 point1, point2 = (cross_point[0], 0), (cross_point[0], 600)
                 hyperplane.append([point1, point2, ref_point[0], ref_point[1]])
-            
+        
+        # 將剩下沒發生意外的線段放入result
         for i in all_line:
             result.append(i)
+
+        for i in p_set1+p_set2:
+            self.draw_point(i)
         for i in hyperplane:
             self.draw_edge(i[0], i[1], "red")
         for i in result:
@@ -409,7 +459,7 @@ class VCanvas(Canvas):
         s = set(self.visible_points) # keep out same points
         gPoints = sorted(list(s) , key=lambda k: [k[0], k[1]])
         
-        self.recursive(gPoints)
+        result = self.recursive(gPoints)
 
 if __name__ == "__main__":
     pass
