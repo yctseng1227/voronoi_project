@@ -16,7 +16,9 @@ class VCanvas(Canvas):
 
         self.subset_points = iter([])
         self.visible_points = []
-        #self.visible_lines = []
+        self.subset_voronoi = iter([])
+        self.visible_voronoi = []
+        self.voronoi_final = []
         self.bind("<Button-1>", self.click_point)
 
     def draw_point(self, point, color="black"):
@@ -43,6 +45,7 @@ class VCanvas(Canvas):
         self.delete("all")
         self.visible_points = []
         self.visible_lines = []
+        self.visible_voronoi = []
     
     def set_subset_points(self, points):
         self.subset_points = iter(points)
@@ -58,6 +61,22 @@ class VCanvas(Canvas):
         for point in subset_points:
             self.draw_point(point)
         self.visible_points = subset_points
+
+    def next_voronoi(self):
+        if len(self.visible_points) != 0 and (len(self.visible_voronoi) == 0):
+            self.voronoi_step()
+            self.subset_voronoi = iter(self.visible_voronoi)
+
+        subset_voronoi = next(self.subset_voronoi, None)
+        self.delete("all")
+        for point in self.visible_points:
+            self.draw_point(point)
+        if subset_voronoi is None:
+            for v in self.voronoi_final:
+                self.draw_edge(v[0], v[1], "brown")
+            return
+        for line in subset_voronoi:
+            self.draw_edge(line[0], line[1], "blue")
 
     def random_points(self):
         # self.clean_canvas()
@@ -105,33 +124,6 @@ class VCanvas(Canvas):
 
     def line_distance(self, p1, p2):
         return math.sqrt( ((p1[0]-p2[0])**2)+((p1[1]-p2[1])**2) )
-
-    # Draw voronoi diagram
-    def drawVoronoi(self, img, subdiv):
-
-        # Get facets and centers
-        (facets, centers) = subdiv.getVoronoiFacetList([])
-
-        for i in range(0, len(facets)):
-            ifacetArr = []
-            for f in facets[i]:
-                ifacetArr.append(f)
-
-            # Extract ith facet
-            ifacet = np.array(ifacetArr, np.int)
-
-            # Generate random color
-            color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-
-            # Fill facet with a random color
-            cv2.fillConvexPoly(img, ifacet, color, cv2.LINE_AA, 0)
-
-            # Draw facet boundary
-            ifacets = np.array([ifacet])
-            cv2.polylines(img, ifacets, True, (0, 0, 0), 1, cv2.LINE_AA, 0)
-
-            # Draw centers.
-            cv2.circle(img, (centers[i][0], centers[i][1]), 3, (0, 0, 0), -1, cv2.LINE_AA, 0)
 
     def voronoi_sample(self):
         pass
@@ -247,20 +239,17 @@ class VCanvas(Canvas):
         else:
             pass
 
-        for i in all_line:
-            self.draw_edge(i[0], i[1])
-            # self.visible_lines.append((i[0][0], i[0][1], i[1][0], i[1][1]))
+        # for i in all_line:
+        #     self.draw_edge(i[0], i[1])
         return all_line
 
+    # 拿掉多餘的HP
     def prune_check(self, point, all_line):
         lines = []
-        print(point)
-        print("QQQQQ", all_line)
         for i in all_line:
             if point == i[0] or point == i[1]:
                 lines.append(i)
         if len(lines) == 1:
-            print("######", lines[-1])
             return lines[-1]
         return None
 
@@ -297,7 +286,6 @@ class VCanvas(Canvas):
         
 
     def merge(self, p_set1, l_set1, p_set2, l_set2):
-        self.clean_canvas()
 
         # convex hull
         if len(p_set1) < 3:
@@ -352,10 +340,10 @@ class VCanvas(Canvas):
             point1, point2 = (mid[0], 0), (mid[0], 600)
             hyperplane.append([point1, point2, ref_point[0], ref_point[1]])
 
+        #while True:
         aaa = 10
         if len(p_set1) == 6:
             aaa = 10
-        #while True:
         for _ in range(aaa):
             # decide the order with p_set1 & p_set2
             cross_point = (1e9, 1e9)
@@ -378,7 +366,10 @@ class VCanvas(Canvas):
             for i in all_line:
                 if which_line == i:
                     tmp = i
-                    if self.line_distance(i[0], i[3]) < self.line_distance(i[1], i[3]):
+
+                    # 從cross_point 和 畫出該線段的中點mid 決定如何修正
+                    mid = ( ((i[2][0]+i[3][0]) / 2), ((i[2][1]+i[3][1]) / 2) )
+                    if self.line_distance(cross_point, i[1]) < self.line_distance(mid, i[1]):
                         all_line.remove(i)
 
                         res = self.prune_check(tmp[1], all_line+result)
@@ -443,14 +434,18 @@ class VCanvas(Canvas):
 
     def recursive(self, point_set):
         if len(point_set) <= 3:
-            return self.v3points(point_set)
+            result = self.v3points(point_set)
+            self.visible_voronoi.append(result)
+            return result
 
         p_set1, p_set2 = point_set[:int(len(point_set)/2)], point_set[int(len(point_set)/2):]
 
         l_set1 = self.recursive(p_set1)
         l_set2 = self.recursive(p_set2)
 
-        return self.merge(p_set1, l_set1, p_set2, l_set2)
+        result = self.merge(p_set1, l_set1, p_set2, l_set2)
+        self.visible_voronoi.append(result)
+        return result
 
     def voronoi_step(self):
         if len(self.visible_points) == 0:
@@ -459,7 +454,8 @@ class VCanvas(Canvas):
         s = set(self.visible_points) # keep out same points
         gPoints = sorted(list(s) , key=lambda k: [k[0], k[1]])
         
-        result = self.recursive(gPoints)
+        self.voronoi_final = self.recursive(gPoints)
+
 
 if __name__ == "__main__":
     pass
