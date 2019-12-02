@@ -394,6 +394,12 @@ class VCanvas(Canvas):
         result = []
         hyperplane = []
         ref_point = [ p_set1[0], p_set2[0] ]
+        for i in l_set1:
+            if i[0][0] > i[1][0]:
+                i[0], i[1] = i[1], i[0]
+        for i in l_set2:
+            if i[0][0] > i[1][0]:
+                i[0], i[1] = i[1], i[0]
         all_line = l_set1 + l_set2
         
 
@@ -409,14 +415,14 @@ class VCanvas(Canvas):
             point1, point2 = (mid[0], 0), (mid[0], 600)
             hyperplane.append([point1, point2, ref_point[0], ref_point[1]])
 
-        #while True:
-        aaa = 100
-        if len(p_set1) == 2:
-            aaa = 100
-        for _ in range(aaa):
+        # aaa = 100
+        # if len(p_set1) == 2:
+        #     aaa = 100
+        # for _ in range(aaa):
+        while True:
             # decide the order with p_set1 & p_set2
             cross_point = (1e9, 1e9)
-            which_line = []
+            which_line = []    
             
             # 找出 HP和所有線段的交點, 取y值最小交點
             for i in all_line:
@@ -431,29 +437,25 @@ class VCanvas(Canvas):
             # 有交點, 修正HP線段終點
             hyperplane[-1][1] = cross_point
 
-            # 和某線段有交點, 修正該線段的起點/終點, 並放入result
-            for i in all_line:
+            for i in l_set1:
                 if which_line == i:
                     tmp = i
-
+                    all_line.remove(i)
                     # 從cross_point 和 畫出該線段的中點mid 決定如何修正
                     mid = ( ((tmp[2][0]+tmp[3][0]) / 2), ((tmp[2][1]+tmp[3][1]) / 2) )
-                    if self.line_distance(cross_point, i[1]) < self.line_distance(mid, i[1]):
-                        all_line.remove(i)
+                    # tmp[0] -> mid -> cross_point : 銳角, 線段tmp[0]-cross_point
 
-                        res = self.prune_check(tmp[1], all_line+result)
-                        if res != None:
-                            all_line.remove(res)
-
-                        res = self.prune_check(tmp[0], all_line+result)
-                        if res != None:
-                            all_line.remove(res)
-                        else:
-                            tmp[1] = cross_point
-                            result.append(tmp)
+                    replace = -1
+                    if mid[0] > cross_point[0] and mid[1] > cross_point[1]:
+                        replace = 1
+                    elif mid[0] > cross_point[0] and mid[1] < cross_point[1]:
+                        replace = 0
+                    elif mid[0] < cross_point[0] and mid[1] > cross_point[1]:
+                        replace = 1
                     else:
-                        all_line.remove(i)
-
+                        replace = 1
+                    #---
+                    if replace == 0:
                         res = self.prune_check(tmp[0], all_line+result)
                         if res != None:
                             all_line.remove(res)
@@ -464,7 +466,88 @@ class VCanvas(Canvas):
                         else:
                             tmp[0] = cross_point
                             result.append(tmp)
+                    else:
+                        res = self.prune_check(tmp[1], all_line+result)
+                        if res != None:
+                            all_line.remove(res)
+                        res = self.prune_check(tmp[0], all_line+result)
+                        if res != None:
+                            all_line.remove(res)
+                        else:
+                            tmp[1] = cross_point
+                            result.append(tmp)
                     break
+
+            for i in l_set2:
+                if which_line == i:
+                    tmp = i
+                    all_line.remove(i)
+
+                    mid = ( ((tmp[2][0]+tmp[3][0]) / 2), ((tmp[2][1]+tmp[3][1]) / 2) )
+                    replace = -1
+                    if mid[0] > cross_point[0] and mid[1] > cross_point[1]:
+                        replace = 0
+                    elif mid[0] > cross_point[0] and mid[1] < cross_point[1]:
+                        replace = 0
+                    elif mid[0] < cross_point[0] and mid[1] > cross_point[1]:
+                        replace = 1
+                    else:
+                        replace = 1
+                    #---
+                    if replace == 0:
+                        res = self.prune_check(tmp[0], all_line+result)
+                        if res != None:
+                            all_line.remove(res)
+
+                        res = self.prune_check(tmp[1], all_line+result)
+                        if res != None:
+                            all_line.remove(res)
+                        else:
+                            tmp[0] = cross_point
+                            result.append(tmp)
+                    else:
+                        res = self.prune_check(tmp[1], all_line+result)
+                        if res != None:
+                            all_line.remove(res)
+                        res = self.prune_check(tmp[0], all_line+result)
+                        if res != None:
+                            all_line.remove(res)
+                        else:
+                            tmp[1] = cross_point
+                            result.append(tmp)
+                    break
+
+            # # 和某線段有交點, 修正該線段的起點/終點, 並放入result
+            # for i in all_line:
+            #     if which_line == i:
+            #         tmp = i
+            #         all_line.remove(i)
+
+            #         # 從cross_point 和 畫出該線段的中點mid 決定如何修正
+            #         mid = ( ((tmp[2][0]+tmp[3][0]) / 2), ((tmp[2][1]+tmp[3][1]) / 2) )
+            #         if self.line_distance(cross_point, tmp[1]) < self.line_distance(mid, tmp[1]):
+            #             res = self.prune_check(tmp[1], all_line+result)
+            #             if res != None:
+            #                 all_line.remove(res)
+            #             res = self.prune_check(tmp[0], all_line+result)
+            #             if res != None:
+            #                 all_line.remove(res)
+            #             else:
+            #                 tmp[1] = cross_point
+            #                 result.append(tmp)
+            #         else:
+
+            #             res = self.prune_check(tmp[0], all_line+result)
+            #             if res != None:
+            #                 all_line.remove(res)
+
+            #             res = self.prune_check(tmp[1], all_line+result)
+            #             if res != None:
+            #                 all_line.remove(res)
+            #             else:
+            #                 tmp[0] = cross_point
+            #                 result.append(tmp)
+            #         break
             
             # decide the next ref_point
             if ref_point[0] == which_line[2]:
@@ -487,11 +570,12 @@ class VCanvas(Canvas):
             else:
                 point1, point2 = (cross_point[0], 0), (cross_point[0], 600)
                 hyperplane.append([point1, point2, ref_point[0], ref_point[1]])
-        
-        # 將剩下沒發生意外的線段放入result
+
+        # 將剩下沒用到的線段放入result
         for i in all_line:
             result.append(i)
 
+        # debug
         for i in p_set1+p_set2:
             self.draw_point(i)
         for i in hyperplane:
@@ -528,8 +612,7 @@ class VCanvas(Canvas):
                 result.append([(0, mid), (800, mid), point_set[x1], point_set[x2]])
             self.visible_voronoi.append(result)
             return result
-
-        # p_set1, p_set2 = point_set[:int(len(point_set)/2)], point_set[int(len(point_set)/2):]
+            
         midx = (point_set[0][0] + point_set[-1][0]) / 2
         idx = int(len(point_set) / 2)
         for i in range(len(point_set)):
@@ -538,7 +621,7 @@ class VCanvas(Canvas):
                 break
 
         p_set1, p_set2 = point_set[:idx], point_set[idx:]
-        print(len(p_set1), len(p_set2))
+        # print(len(p_set1), len(p_set2))
         l_set1 = self.recursive(p_set1)
         l_set2 = self.recursive(p_set2)
 

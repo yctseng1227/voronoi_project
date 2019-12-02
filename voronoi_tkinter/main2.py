@@ -24,15 +24,15 @@ class RootWidget:
         # self.label = tk.Label(self.window, font=("Times", 20), fg="red")
         # self.label.pack(side="right")
 
-        ttk.Button(text="IMPORT", command=self.open_PL_file).pack(side=tk.LEFT)
-        ttk.Button(text="LOAD", command=self.open_file).pack(side=tk.LEFT)
-        ttk.Button(text="RANDOM", command=self.canvas.random_points).pack(side=tk.LEFT)
-        ttk.Button(text="SAVE", command=self.save_file).pack(side=tk.LEFT)
-        ttk.Button(text="NEXT", command=self.canvas.next_points).pack(side=tk.LEFT)
-        ttk.Button(text="STEP", command=self.canvas.next_voronoi).pack(side=tk.LEFT)
-        ttk.Button(text="RUN", command=self.canvas.voronoi_sample).pack(side=tk.LEFT)
-        ttk.Button(text="CLEAR", command=self.canvas.clean_canvas).pack(side=tk.LEFT)
-        ttk.Button(text="DEBUG", command=self.canvas.voronoi_step).pack(side=tk.RIGHT)
+        ttk.Button(text="import", command=self.open_PL_file).pack(side=tk.LEFT)
+        ttk.Button(text="load", command=self.open_file).pack(side=tk.LEFT)
+        ttk.Button(text="random", command=self.canvas.random_points).pack(side=tk.LEFT)
+        ttk.Button(text="save", command=self.save_file).pack(side=tk.LEFT)
+        ttk.Button(text="next case", command=self.canvas.next_points).pack(side=tk.LEFT)
+        ttk.Button(text="step by step", command=self.canvas.next_voronoi).pack(side=tk.LEFT)
+        ttk.Button(text="run VD", command=self.canvas.voronoi_sample).pack(side=tk.LEFT)
+        ttk.Button(text="clear", command=self.canvas.clean_canvas).pack(side=tk.LEFT)
+        ttk.Button(text="convex hull", command=self.canvas.voronoi_step).pack(side=tk.RIGHT)
         
 
     def open_file(self):
