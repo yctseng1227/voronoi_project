@@ -68,13 +68,22 @@ class VCanvas(Canvas):
             self.subset_voronoi = iter(self.visible_voronoi)
 
         subset_voronoi = next(self.subset_voronoi, None)
+
+        # 把線清除 重畫points
         self.delete("all")
         for point in self.visible_points:
             self.draw_point(point)
+
+        # voronoi 按到底
         if subset_voronoi is None:
+            # canvas上沒有points
+            if len(self.visible_points) == 0:
+                return
+            # final
             for v in self.voronoi_final:
                 self.draw_edge(v[0], v[1], "brown")
             return
+        # step by step
         for line in subset_voronoi:
             self.draw_edge(line[0], line[1], "blue")
 
@@ -87,6 +96,8 @@ class VCanvas(Canvas):
 
 
     # voronoi--------------------------------------------------------------------------
+
+    # 找三個點的外心
     def cercle_circonscrit(self, points):
         (x1, y1), (x2, y2), (x3, y3) = points
         A = np.array([[x3-x1,y3-y1],[x3-x2,y3-y2]])
@@ -102,6 +113,7 @@ class VCanvas(Canvas):
             return False
         return x, y
 
+    # 找某線段的鉛錘線
     def slope_intercept(self, p1, p2):
         x1, y1 = p1[0], p1[1]
         x2, y2 = p2[0], p2[1]
@@ -115,7 +127,7 @@ class VCanvas(Canvas):
 
         return (midx, midy), a, b
 
-    # False: obtuse angle
+    # False: obtuse angle(鈍角)
     def which_triangle(self, p1, p2, p3):
         (x1, y1), (x2, y2), (x3, y3) = p1, p2, p3
         res = (x1-x2) * (x1-x3) + (y1-y2) * (y1-y3)
@@ -126,7 +138,21 @@ class VCanvas(Canvas):
         return math.sqrt( ((p1[0]-p2[0])**2)+((p1[1]-p2[1])**2) )
 
     def voronoi_sample(self):
-        pass
+        # canvas上沒有points
+        if len(self.visible_points) == 0:
+            return
+
+        # final
+        self.voronoi_step()
+
+        # 把線清除 重畫points
+        self.delete("all")
+        for point in self.visible_points:
+            self.draw_point(point)
+
+        for v in self.voronoi_final:
+            self.draw_edge(v[0], v[1], "brown")
+        return
 
     def v3points(self, points):
         # self.visible_points = sorted(self.visible_points , key=lambda k: [k[0], k[1]])
@@ -232,10 +258,10 @@ class VCanvas(Canvas):
             mid, a, b = self.slope_intercept(points[0], points[1])
             if a != -1e9:
                 point1, point2 = (0, b), (800, a*800+b)
-                all_line.append([point1, point2])
+                all_line.append([point1, point2, points[0], points[1]])
             else:
                 point1, point2 = (mid[0], 0), (mid[0], 600)
-                all_line.append([point1, point2])
+                all_line.append([point1, point2, points[0], points[1]])
         else:
             pass
 
@@ -270,20 +296,65 @@ class VCanvas(Canvas):
             return None
 
         # 用線方程式找交點
-        # find line1: y = a1 * x + b1
-        a1 = (y1-y2) / (x1-x2)
-        b1 = y1 - a1 * x1
-        
-        # find line2: y = a2 * x + b2
-        a2 = (y3-y4) / (x3-x4)
-        b2 = y3 - a2 * x3
 
-        x = (b1-b2) / (a2 - a1)
-        y = a1 * x + b1
+        # 其中一邊為垂直線
+        if x1 - x2 == 0:
+            x = x1
+            a2 = (y3-y4) / (x3-x4)
+            b2 = y3 - a2 * x3
+            y = a2 * x + b2
+            
+        elif x3 - x4 == 0:
+            x = x3
+            a1 = (y1-y2) / (x1-x2)
+            b1 = y1 - a1 * x1
+            y = a1 * x + b1
+        else:
+            # find line1: y = a1 * x + b1
+            a1 = (y1-y2) / (x1-x2)
+            b1 = y1 - a1 * x1
+            
+            # find line2: y = a2 * x + b2
+            a2 = (y3-y4) / (x3-x4)
+            b2 = y3 - a2 * x3
+
+            x = (b1-b2) / (a2 - a1)
+            y = a1 * x + b1
         if 0 <= x <= 800 and 0 <= y <= 600:
             return (x, y)
         return None
+
+    def convex_order(self, p_set):
+        # 如果p_set都在同y=k上, 則不做convex hull
+        do_convex_y = False
+        check_x = p_set[0][0]
+        for i in p_set:
+            if check_x != i[0]:
+                do_convex_x = True
+                break
+
+        # 如果p_set都在同x=k上, 則不做convex hull
+        do_convex_x = False
+        check_y = p_set[0][1]
+        for i in p_set:
+            if check_y != i[1]:
+                do_convex_y = True
+                break
         
+        _list = []
+        if do_convex_x == False:
+            sorted(list(p_set) , key=lambda k: [k[1], k[0]])
+            for i in range(len(p_set)):
+                _list.append(i)
+        elif do_convex_y == False:
+            sorted(list(p_set) , key=lambda k: [k[0], k[1]])
+            for i in range(len(p_set)):
+                _list.append(i)
+        else:
+            hull = ConvexHull(p_set)
+            _list = list(hull.vertices)
+
+        return _list
 
     def merge(self, p_set1, l_set1, p_set2, l_set2):
 
@@ -292,8 +363,7 @@ class VCanvas(Canvas):
             if len(p_set1) == 2:
                 self.draw_edge(p_set1[0], p_set1[1], "blue")
         else:
-            hull = ConvexHull(p_set1)
-            _list = list(hull.vertices)
+            _list = self.convex_order(p_set1)
             for x1, x2 in zip(_list, _list[1:] + _list[:1]):
                 self.draw_edge(p_set1[x1], p_set1[x2], "blue")
 
@@ -301,8 +371,7 @@ class VCanvas(Canvas):
             if len(p_set2) == 2:
                 self.draw_edge(p_set2[0], p_set2[1], "blue")
         else:
-            hull = ConvexHull(p_set2)
-            _list = list(hull.vertices)
+            _list = self.convex_order(p_set2)
             for x1, x2 in zip(_list, _list[1:] + _list[:1]):
                 self.draw_edge(p_set2[x1], p_set2[x2], "blue")
 
@@ -341,9 +410,9 @@ class VCanvas(Canvas):
             hyperplane.append([point1, point2, ref_point[0], ref_point[1]])
 
         #while True:
-        aaa = 10
-        if len(p_set1) == 6:
-            aaa = 10
+        aaa = 100
+        if len(p_set1) == 2:
+            aaa = 100
         for _ in range(aaa):
             # decide the order with p_set1 & p_set2
             cross_point = (1e9, 1e9)
@@ -368,7 +437,7 @@ class VCanvas(Canvas):
                     tmp = i
 
                     # 從cross_point 和 畫出該線段的中點mid 決定如何修正
-                    mid = ( ((i[2][0]+i[3][0]) / 2), ((i[2][1]+i[3][1]) / 2) )
+                    mid = ( ((tmp[2][0]+tmp[3][0]) / 2), ((tmp[2][1]+tmp[3][1]) / 2) )
                     if self.line_distance(cross_point, i[1]) < self.line_distance(mid, i[1]):
                         all_line.remove(i)
 
@@ -433,13 +502,43 @@ class VCanvas(Canvas):
         return hyperplane+result
 
     def recursive(self, point_set):
+
+        # 小於3個點直接回傳voronoi
         if len(point_set) <= 3:
             result = self.v3points(point_set)
             self.visible_voronoi.append(result)
             return result
+        
+        # 點全都在x=k上
+        same_xline = True
+        check_x = point_set[0][0]
+        for i in point_set:
+            if check_x != i[0]:
+                same_xline = False
+                break
+        if same_xline:
+            sorted(list(point_set) , key=lambda k: [k[1], k[0]])
+            _list = []
+            result = []
+            for i in range(len(point_set)):
+                _list.append(i)
+            for x1, x2 in zip(_list, _list[1:] + _list[:1]):
+                self.draw_edge(point_set[x1], point_set[x2], "blue")
+                mid = (point_set[x1][1] + point_set[x2][1]) / 2
+                result.append([(0, mid), (800, mid), point_set[x1], point_set[x2]])
+            self.visible_voronoi.append(result)
+            return result
 
-        p_set1, p_set2 = point_set[:int(len(point_set)/2)], point_set[int(len(point_set)/2):]
+        # p_set1, p_set2 = point_set[:int(len(point_set)/2)], point_set[int(len(point_set)/2):]
+        midx = (point_set[0][0] + point_set[-1][0]) / 2
+        idx = int(len(point_set) / 2)
+        for i in range(len(point_set)):
+            if point_set[i][0] > midx:
+                idx = i
+                break
 
+        p_set1, p_set2 = point_set[:idx], point_set[idx:]
+        print(len(p_set1), len(p_set2))
         l_set1 = self.recursive(p_set1)
         l_set2 = self.recursive(p_set2)
 
@@ -453,9 +552,7 @@ class VCanvas(Canvas):
 
         s = set(self.visible_points) # keep out same points
         gPoints = sorted(list(s) , key=lambda k: [k[0], k[1]])
-        
         self.voronoi_final = self.recursive(gPoints)
-
 
 if __name__ == "__main__":
     pass
