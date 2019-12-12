@@ -1,5 +1,5 @@
 # $LAN=PYTHON$
-# Algorithm project by m083140005 曾煜鈞
+# Algorithm project by m083140005 曾煜鈞(Yu-Chun, Tseng)
 # Github: https://github.com/yctseng1227/voronoi_project
 # Copyright © 2019 yctseng. All rights reserved
 
