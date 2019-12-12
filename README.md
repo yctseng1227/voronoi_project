@@ -6,7 +6,7 @@ Project for Algorithm midterm.
 I was started by using **Python-kivy** in UbuntuOS to do this Voronoi diagram project, since that the relevant kit doesn't support packaging into ".exe" with WindowsOS, I switched to Python's built-in **tkinter**.
 
 相關心得詳見Blog:
-https://yctseng1227.github.io//2019/12/08/20191208-voronoi-diagram-project/
+https://yctseng1227.github.io/2019/12/08/20191208-voronoi-diagram-project/
 
 ```bash
 .
@@ -18,7 +18,7 @@ https://yctseng1227.github.io//2019/12/08/20191208-voronoi-diagram-project/
 |   ├── main.py
 |   ├── result.txt          # Output file
 |   ├── simple.txt          # Input file
-├── voronoi_tkinter
+├── voronoi_tkinter         # kivy
 |   ├── .gitgnore
 |   ├── canvas.py           # main implement
 |   ├── final_merge.py      # merge by all source code
