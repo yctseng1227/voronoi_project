@@ -29,6 +29,6 @@ https://yctseng1227.github.io//2019/12/08/20191208-voronoi-diagram-project/
 |   ├── simple_testcase.txt # Input file (my testcase)
 ├── .gitgnore
 ├── README.md
-├── requirements.txt        # environments setting
+└── requirements.txt        # environments setting
 
 ```
