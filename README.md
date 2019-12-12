@@ -18,7 +18,7 @@ https://yctseng1227.github.io/2019/12/08/20191208-voronoi-diagram-project/
 |   ├── main.py
 |   ├── result.txt          # Output file
 |   ├── simple.txt          # Input file
-├── voronoi_tkinter         # kivy
+├── voronoi_tkinter         # kivy打包失敗, 搬家到tkinter
 |   ├── .gitgnore
 |   ├── canvas.py           # main implement
 |   ├── final_merge.py      # merge by all source code
