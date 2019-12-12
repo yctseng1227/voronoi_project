@@ -1,4 +1,8 @@
-# Algorithm project by m083140005
+# $LAN=PYTHON$
+# Algorithm project by m083140005 曾煜鈞
+# Github: https://github.com/yctseng1227/voronoi_project
+# Copyright © 2019 yctseng. All rights reserved
+
 import tkinter as tk
 import tkinter.messagebox
 import pickle

@@ -1,3 +1,8 @@
+# $LAN=PYTHON$
+# Algorithm project by m083140005 曾煜鈞
+# Github: https://github.com/yctseng1227/voronoi_project
+# Copyright © 2019 yctseng. All rights reserved
+
 from tkinter import Canvas
 from itertools import combinations
 import tkinter as tk
